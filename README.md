@@ -16,12 +16,10 @@ A fully self-hosted email application built from scratch using Node.js, Express,
 - ✅ **Backend API** with REST endpoints to fetch/send mail
 - 🔐 **Secure setup** with SSL certs via Let's Encrypt
 - 🔌 **Supports integration with Thunderbird & other clients**
-
-### 🔮 Future Scope
-
-- ✍️ AI-assisted email writing
-- 🧠 Job tracking automation
-- 📚 Email tagging and folder support
+- ⚡ **Future Scope**:
+  - ✍️ AI-assisted email writing
+  - 🧠 Job tracking automation
+  - 📚 Email tagging and folder support
 
 ---
 
@@ -32,7 +30,7 @@ A fully self-hosted email application built from scratch using Node.js, Express,
 - `nodemailer` for SMTP
 - `node-imap` for IMAP access
 - `mailparser` for parsing email content
-- `dotenv` for configuration
+- Dotenv for configuration
 
 **Email Server:**
 - Postfix (SMTP relay)
@@ -48,17 +46,27 @@ A fully self-hosted email application built from scratch using Node.js, Express,
 
 ## 📁 Project Structure
 
-email-app-backend/ ├── config/ # SMTP & IMAP setup │ ├── smtp.js │ └── imap.js ├── controllers/ # Route handlers │ └── emailController.js ├── routes/ # Express routes │ └── emails.js ├── services/ # Business logic (IMAP/SMTP helpers) │ ├── imapService.js │ └── smtpService.js ├── .env # Environment variables (not committed) └── app.js # Main entry point
-
-yaml
-Copy
-Edit
+```
+email-app-backend/
+├── config/             # SMTP & IMAP setup
+│   ├── smtp.js
+│   └── imap.js
+├── controllers/        # Route handlers
+│   └── emailController.js
+├── routes/             # Express routes
+│   └── emails.js
+├── services/           # Business logic (IMAP/SMTP helpers)
+│   ├── imapService.js
+│   └── smtpService.js
+├── .env                # Environment variables (not committed)
+└── app.js              # Main entry point
+```
 
 ---
 
 ## 🔐 Environment Variables
 
-Create a `.env` file in the root directory:
+Create a `.env` file in the root directory with the following:
 
 ```env
 PORT=5000
@@ -74,34 +82,42 @@ SMTP_HOST=in-v3.mailjet.com
 SMTP_PORT=587
 SMTP_USER=your-mailjet-api-key
 SMTP_PASS=your-mailjet-secret-key
-📬 API Endpoints
+```
 
-Method	Route	Description
-POST	/api/emails/send	Send a new email
-GET	/api/emails/inbox	Fetch inbox with thread grouping
-GET	/api/emails/search	Search inbox by subject/sender
-💡 Motivation
+---
+
+## 📬 API Endpoints
+
+| Method | Route                | Description                        |
+|--------|----------------------|------------------------------------|
+| POST   | `/api/emails/send`   | Send a new email                   |
+| GET    | `/api/emails/inbox`  | Fetch inbox with thread grouping  |
+| GET    | `/api/emails/search` | Search inbox by subject/sender    |
+
+---
+
+## 💡 Motivation
+
 I built this app to:
 
-🚀 Explore the fundamentals of email infrastructure (SMTP, IMAP, SSL, DNS)
+- 🚀 Explore the fundamentals of email infrastructure (SMTP, IMAP, SSL, DNS)
+- 💻 Run my own inbox with full control using `dev@dhruvilrangani.com`
+- 🧱 Build real-world backend systems using Node.js
+- 🤖 Add AI-powered job application assistance (coming soon)
 
-💻 Run my own inbox with full control using dev@dhruvilrangani.com
+---
 
-🧱 Build real-world backend systems using Node.js
+## 👨‍💻 Author
 
-🤖 Add AI-powered job application assistance (coming soon)
+Built with ❤️ by [Dhruvil Rangani](https://dhruvilrangani.com)
 
-👨‍💻 Author
-Built with ❤️ by Dhruvil Rangani
+---
 
-📢 Coming Soon: Frontend UI
+## 📢 Coming Soon: Frontend UI
+
 The frontend (Next.js + Tailwind CSS) will include:
 
-📥 Rich inbox UI with thread view
-
-📝 Compose email interface
-
-🔍 Search, tagging, and filters
-
-🤖 AI tools like recruiter email suggestions and cover letter generation
- 
+- 📥 Rich inbox UI with thread view  
+- 📝 Compose email interface  
+- 🔍 Search, tagging, and filters  
+- 🤖 AI tools like recruiter email suggestions and cover letter generation
