@@ -1,2 +1,29 @@
+# Node modules and environment
+node_modules/
 .env
-node_modules
+.env.*        # in case you use env.local, etc.
+
+# Prisma generated client (we'll regenerate on deploy/build)
+prisma/node_modules/
+prisma/prisma/generated/
+!.prisma/schema.prisma
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Database
+*.sqlite
+*.db
+
+# Misc
+package-lock.json
