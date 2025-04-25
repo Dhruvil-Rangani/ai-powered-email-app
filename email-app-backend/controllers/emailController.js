@@ -93,9 +93,9 @@ const downloadAttachment = async (req, res) => {
 
 // Add tag to an email
 const tagEmail = async (req, res) => {
-  const { emailId, label } = req.body;
+  const { messageId, label } = req.body;
   try {
-    const tag = await addTag(emailId, label);
+    const tag = await addTag(messageId, label);
     res.status(201).json(tag);
   } catch (err) {
     res.status(500).json({ error: 'Failed to tag email', details: err.message });
@@ -115,8 +115,8 @@ const getEmailTags = async (req, res) => {
 // Get all emails tagged with a specific label
 const getEmailsByTag = async (req, res) => {
   try {
-    const emails = await filterEmailsByTag(req.params.label);
-    res.json(emails); // You can enhance this to fetch email details too
+    const tags = await filterEmailsByTag(req.params.label);
+    res.json(tags); // You can enhance this to fetch email details too
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch tagged emails', details: err.message });
   }
