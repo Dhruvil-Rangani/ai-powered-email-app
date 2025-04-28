@@ -31,10 +31,10 @@ const sendEmail = async (req, res) => {
 
 // Fetch Inbox Emails Controller
 const getInboxEmails = async (req, res) => {
-  const { from, subject, folder } = req.query;
+  const { from, subject, body, after, before, folder } = req.query;
 
   try {
-    const emails = await fetchInboxEmails({ from, subject, folder });
+    const emails = await fetchInboxEmails({ from, subject, body, after, before, folder });
     const threads = groupByThread(emails);
     res.status(200).json({ threads });
   } catch (error) {

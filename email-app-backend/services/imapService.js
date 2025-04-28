@@ -3,80 +3,84 @@ const getImapConnection = require('../config/imap');
 const { simpleParser } = require('mailparser');
 require('dotenv').config();
 
-const fetchInboxEmails = (filters = {}) => {
-  return new Promise((resolve, reject) => {
-    const imap = getImapConnection();
+const fetchInboxEmails = (filters = {}) =>
+  new Promise((resolve, reject) => {
+    const imap   = getImapConnection();
     const emails = [];
     const folder = filters.folder || 'INBOX';
+
+    /* ---------- normalise filters once ---------- */
+    const clean = (v) => (typeof v === 'string' && v.trim() ? v.trim() : null);
+
+    const fromFilter    = clean(filters.from);
+    const subjectFilter = clean(filters.subject);
+    const bodyFilter    = clean(filters.body);
+
+    const afterDate = clean(filters.after)  ? new Date(filters.after)  : null;
+    const beforeDate = clean(filters.before) ? new Date(filters.before) : null;
+
+    if (afterDate)  afterDate.setUTCHours(0, 0, 0, 0);          // 00:00:00
+    if (beforeDate) beforeDate.setUTCHours(23, 59, 59, 999);    // 23:59:59
 
     imap.once('ready', () => {
       imap.openBox(folder, true, (err, box) => {
         if (err) return reject(err);
 
-        const fetch = imap.seq.fetch(`${Math.max(1, box.messages.total - 50)}:*`, {
-          bodies: '',
-          struct: true
-        });
+        const fetch = imap.seq.fetch(
+          `${Math.max(1, box.messages.total - 50)}:*`,
+          { bodies: '', struct: true }
+        );
 
         const parsePromises = [];
 
         fetch.on('message', (msg) => {
-          const parserPromise = new Promise((res, rej) => {
-            msg.on('body', stream => {
+          const p = new Promise((res, rej) => {
+            msg.on('body', (stream) =>
               simpleParser(stream, (err, parsed) => {
                 if (err) return rej(err);
 
                 const emailDate = parsed.date ? new Date(parsed.date) : null;
-                const clean = (value) => (value && value.trim() !== "") ? value.trim() : null;
 
-                const fromFilter = clean(filters.from);
-                const subjectFilter = clean(filters.subject);
-                const bodyFilter = clean(filters.body);
-                const afterFilter = clean(filters.after);
-                const beforeFilter = clean(filters.before);
+                /* ---------- match tests ---------- */
+                const matches =
+                  (!fromFilter    || parsed.from.text.toLowerCase().includes(fromFilter.toLowerCase())) &&
+                  (!subjectFilter || (parsed.subject || '').toLowerCase().includes(subjectFilter.toLowerCase())) &&
+                  (!bodyFilter    || (parsed.text || '').toLowerCase().includes(bodyFilter.toLowerCase())) &&
+                  (!afterDate     || (emailDate && emailDate >= afterDate)) &&
+                  (!beforeDate    || (emailDate && emailDate <= beforeDate));
 
-                const matchesFrom = fromFilter ? parsed.from.text.toLowerCase().includes(fromFilter.toLowerCase()) : true;
-                const matchesSubject = subjectFilter ? parsed.subject?.toLowerCase().includes(subjectFilter.toLowerCase()) : true;
-                const matchesBody = bodyFilter ? parsed.text?.toLowerCase().includes(bodyFilter.toLowerCase()) : true;
-
-                const dateOnly = emailDate?.toISOString().split('T')[0]; // e.g., '2025-04-23'
-                const afterDate = afterFilter ? new Date(afterFilter) : null;
-                if (afterDate) afterDate.setUTCHours(0, 0, 0, 0); // Start of day (UTC)
-
-                const beforeDate = beforeFilter ? new Date(beforeFilter) : null;
-                if (beforeDate) beforeDate.setUTCHours(23, 59, 59, 999); // End of day (UTC)
-
-                const matchesAfter = afterDate ? emailDate && emailDate >= afterDate : true;
-                const matchesBefore = beforeDate ? emailDate && emailDate <= beforeDate : true;
-
-
-                if (matchesFrom && matchesSubject && matchesBody && matchesAfter && matchesBefore) {
-                  const attachments = parsed.attachments?.map(att => ({
-                    filename: att.filename,
-                    contentType: att.contentType,
-                    size: att.size,
-                    contentId: att.cid,
-                    contentDisposition: att.contentDisposition
-                  })) || [];
-
-                  emails.push({
-                    subject: parsed.subject,
-                    from: parsed.from.text,
-                    date: parsed.date,
-                    text: parsed.text,
-                    messageId: parsed.messageId,
-                    inReplyTo: parsed.inReplyTo,
-                    references: parsed.references || [],
-                    attachments,
-                  });
+                /* optional debug */
+                if (process.env.DEBUG_DATES && (afterDate || beforeDate)) {
+                  console.log(
+                    `[FILTER] ${parsed.subject?.slice(0, 30) || '(no subj)'} | ${emailDate?.toISOString()}`
+                    + ` | after ok=${!afterDate || emailDate >= afterDate}`
+                    + ` | before ok=${!beforeDate || emailDate <= beforeDate}`
+                  );
                 }
 
+                if (matches) {
+                  emails.push({
+                    subject     : parsed.subject,
+                    from        : parsed.from.text,
+                    date        : parsed.date,
+                    text        : parsed.text,
+                    messageId   : parsed.messageId,
+                    inReplyTo   : parsed.inReplyTo,
+                    references  : parsed.references || [],
+                    attachments : (parsed.attachments || []).map((a) => ({
+                      filename           : a.filename,
+                      contentType        : a.contentType,
+                      size               : a.size,
+                      contentId          : a.cid,
+                      contentDisposition : a.contentDisposition,
+                    })),
+                  });
+                }
                 res();
-              });
-            });
+              })
+            );
           });
-
-          parsePromises.push(parserPromise);
+          parsePromises.push(p);
         });
 
         fetch.once('end', () => {
@@ -93,6 +97,5 @@ const fetchInboxEmails = (filters = {}) => {
     imap.once('error', reject);
     imap.connect();
   });
-};
 
 module.exports = { fetchInboxEmails };
