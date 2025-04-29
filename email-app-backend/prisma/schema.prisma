@@ -4,28 +4,83 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
-  output   = "./prisma/generated/client"
 }
-
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-model EmailTag {
-  id        String   @id @default(cuid())
-  messageId String
-  tag       String
-  createdAt DateTime @default(now())
+/* ----------  USERS  ---------- */
+model User {
+  id             String          @id @default(cuid())
+  email          String          @unique
+  passwordHash   String
+  createdAt      DateTime        @default(now())
+  refreshTokens  RefreshToken[]
+  chatMessages   ChatMessage[]
+  tags           Tag[]
+
+  PasswordReset PasswordReset[]
 }
 
+/* ----- Long-lived refresh tokens ----- */
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+/* ----- Password-reset tokens (optional) ----- */
+model PasswordReset {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  expires   DateTime
+  used      Boolean  @default(false)
+}
+
+/* ---------- Tags ---------- */
 model Tag {
   id        Int      @id @default(autoincrement())
-  label     String
   emailId   String
+  label     String
   createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?
+
+  @@index([emailId])
+  @@index([label])
 }
+
+/* ---------- Chat messages ---------- */
+enum ChatRole {
+  user
+  assistant
+}
+
+model ChatMessage {
+  id        String    @id @default(cuid())
+  role      ChatRole
+  content   String
+  createdAt DateTime  @default(now())
+
+  user      User?     @relation(fields: [userId], references: [id])
+  userId    String?
+
+  @@index([createdAt])
+}
+
+
+
 

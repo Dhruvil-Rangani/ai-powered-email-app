@@ -2,9 +2,10 @@
 const { PrismaClient } = require('../prisma/prisma/generated/client');
 const prisma = new PrismaClient();
 
-const addTag = async (messageId, label) => {
+const addTag = async ( userId, messageId, label) => {
   return prisma.tag.create({
     data: { 
+        userId,
         emailId: messageId, 
         label 
     }

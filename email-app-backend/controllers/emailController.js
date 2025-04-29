@@ -94,8 +94,10 @@ const downloadAttachment = async (req, res) => {
 // Add tag to an email
 const tagEmail = async (req, res) => {
   const { messageId, label } = req.body;
+  const userId = req.user.id;
+
   try {
-    const tag = await addTag(messageId, label);
+    const tag = await addTag(userId, messageId, label);
     res.status(201).json(tag);
   } catch (err) {
     res.status(500).json({ error: 'Failed to tag email', details: err.message });
