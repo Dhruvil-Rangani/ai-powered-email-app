@@ -107,7 +107,7 @@ const tagEmail = async (req, res) => {
 // Get tags for a specific email
 const getEmailTags = async (req, res) => {
   try {
-    const tags = await getTags(req.params.messageId);
+    const tags = await getTags(req.params.userId, req.params.messageId);
     res.json(tags);
   } catch (err) {
     res.status(500).json({ error: 'Failed to get tags', details: err.message });
@@ -117,7 +117,7 @@ const getEmailTags = async (req, res) => {
 // Get all emails tagged with a specific label
 const getEmailsByTag = async (req, res) => {
   try {
-    const tags = await filterEmailsByTag(req.params.label);
+    const tags = await filterEmailsByTag(req.params.userId, req.params.label);
     res.json(tags); // You can enhance this to fetch email details too
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch tagged emails', details: err.message });

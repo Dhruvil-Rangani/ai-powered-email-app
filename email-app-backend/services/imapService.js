@@ -49,14 +49,14 @@ const fetchInboxEmails = (filters = {}) =>
                   (!afterDate     || (emailDate && emailDate >= afterDate)) &&
                   (!beforeDate    || (emailDate && emailDate <= beforeDate));
 
-                /* optional debug */
-                if (process.env.DEBUG_DATES && (afterDate || beforeDate)) {
-                  console.log(
-                    `[FILTER] ${parsed.subject?.slice(0, 30) || '(no subj)'} | ${emailDate?.toISOString()}`
-                    + ` | after ok=${!afterDate || emailDate >= afterDate}`
-                    + ` | before ok=${!beforeDate || emailDate <= beforeDate}`
-                  );
-                }
+                // /* optional debug */
+                // if (process.env.DEBUG_DATES && (afterDate || beforeDate)) {
+                //   console.log(
+                //     `[FILTER] ${parsed.subject?.slice(0, 30) || '(no subj)'} | ${emailDate?.toISOString()}`
+                //     + ` | after ok=${!afterDate || emailDate >= afterDate}`
+                //     + ` | before ok=${!beforeDate || emailDate <= beforeDate}`
+                //   );
+                // }
 
                 if (matches) {
                   emails.push({

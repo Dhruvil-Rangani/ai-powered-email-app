@@ -12,12 +12,12 @@ const addTag = async ( userId, messageId, label) => {
   });
 };
 
-const getTags = async (emailId) => {
-  return prisma.tag.findMany({ where: { emailId } });
+const getTags = async (userId, emailId) => {
+  return prisma.tag.findMany({ where: { userId, emailId } });
 };
 
-const filterEmailsByTag = async (label) => {
-  return prisma.tag.findMany({ where: { label } });
+const filterEmailsByTag = async (userId, label) => {
+  return prisma.tag.findMany({ where: {userId, label } });
 };
 
 module.exports = { addTag, getTags, filterEmailsByTag };

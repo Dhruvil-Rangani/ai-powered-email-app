@@ -1,46 +1,53 @@
+// controllers/chatController.js
 const OpenAI = require('openai');
 const { saveChat, getHistory } = require('../services/chatService');
-
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// POST /api/ai/chat  { message:"...", history:10 }
+// POST /api/ai/chat
 exports.chat = async (req, res) => {
-  const userId = req.user?.id || null;           // plug in auth later
-  const userMsg = req.body.message?.trim();
-
+  const userId = req.user.id;             // from auth middleware
+  const userMsg = (req.body.message || '').trim();
   if (!userMsg) return res.status(400).json({ error: 'message required' });
 
-  // 1️⃣  store user message
+  // 1) store user message
   await saveChat('user', userMsg, userId);
 
-  // 2️⃣  assemble context
-  const history = await getHistory(req.body.history ?? 10, userId);
+  // 2) assemble context
+  const historyCount = Number(req.body.history) || 10;
+  const history = await getHistory(historyCount, userId);
   const messages = history.map(m => ({ role: m.role, content: m.content }));
   messages.push({ role: 'user', content: userMsg });
 
-  // 3️⃣  call OpenAI (gpt-4.1-nano by default)
+  // 3) call OpenAI
   try {
     const completion = await openai.chat.completions.create({
       model: process.env.OPENAI_MODEL,
       messages,
+      max_tokens: Number(process.env.OPENAI_MAX_TOKENS) || 1024,
+      temperature: 0.7,
     });
 
     const assistantReply = completion.choices[0].message.content.trim();
 
-    // 4️⃣ store assistant reply
+    // 4) store assistant reply
     await saveChat('assistant', assistantReply, userId);
 
     res.json({ reply: assistantReply });
   } catch (err) {
     console.error('OpenAI error', err);
-    res.status(500).json({ error: 'AI request failed' });
+    res.status(500).json({ error: 'AI request failed', details: err.message });
   }
 };
 
 // GET /api/ai/history?limit=20
 exports.history = async (req, res) => {
-  const limit = parseInt(req.query.limit ?? '20', 10);
-  const userId = null;
-  const history = await getHistory(limit, userId);
-  res.json(history);
+  const userId = req.user.id;
+  const limit  = Number(req.query.limit) || 20;
+  try {
+    const history = await getHistory(limit, userId);
+    res.json(history);
+  } catch (err) {
+    console.error('History fetch error', err);
+    res.status(500).json({ error: 'Failed to fetch history', details: err.message });
+  }
 };

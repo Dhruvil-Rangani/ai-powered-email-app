@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 
-const authenticate = require('./middleware/auth');
+const { authenticate } = require('./middleware/auth');
 app.use('/api/auth', authRoutes);
 app.use('/api/emails',authenticate, emailRoutes);
 app.use('/api/ai',authenticate, aiRoutes);

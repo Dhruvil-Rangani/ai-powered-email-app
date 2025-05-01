@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { chat, history } = require('../controllers/aiController');
+const { chat, history } = require('../controllers/chatController');
 const rateLimit = require('express-rate-limit');
 
 
