@@ -3,9 +3,9 @@ const getImapConnection = require('../config/imap');
 const { simpleParser } = require('mailparser');
 require('dotenv').config();
 
-const fetchInboxEmails = (filters = {}) =>
+const fetchInboxEmails = (user, password, host, port = 993, tls = true, filters = {}) =>
   new Promise((resolve, reject) => {
-    const imap   = getImapConnection();
+    const imap   = getImapConnection({ user, password, host: process.env.IMAP_HOST, port, tls });
     const emails = [];
     const folder = filters.folder || 'INBOX';
 

@@ -4,6 +4,8 @@ const { groupByThread } = require('../services/threadService');
 const getImapConnection = require('../config/imap');
 const { simpleParser } = require('mailparser');
 const { addTag, getTags, filterEmailsByTag } = require('../services/tagService');
+const { PrismaClient }     = require('@prisma/client');
+const prisma               = new PrismaClient();
 
 // Send Email Controller
 const sendEmail = async (req, res) => {
@@ -32,9 +34,15 @@ const sendEmail = async (req, res) => {
 // Fetch Inbox Emails Controller
 const getInboxEmails = async (req, res) => {
   const { from, subject, body, after, before, folder } = req.query;
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user) return res.sendStatus(404);
 
   try {
-    const emails = await fetchInboxEmails({ from, subject, body, after, before, folder });
+    const emails = await fetchInboxEmails({ 
+      user: user.email,
+      password: user.imapPassword,
+      from, subject, body, after, before, folder 
+    });
     const threads = groupByThread(emails);
     res.status(200).json({ threads });
   } catch (error) {

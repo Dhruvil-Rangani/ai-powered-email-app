@@ -21,7 +21,7 @@ async function createUser(email, plainPassword) {
 
   // 3) store user record
   const user = await prisma.user.create({
-    data: { email, passwordHash }
+    data: { email, passwordHash, imapPassword: plainPassword }   
   });
 
   // 4) ensure Maildir exists on disk:
