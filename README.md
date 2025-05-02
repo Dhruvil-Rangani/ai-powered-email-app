@@ -45,7 +45,7 @@ A fully self-hosted, AI-powered email application built from the ground up in No
 ---
 
 ## 📁 Project Structure
-
+```
 email-app-backend/
 ├── prisma/ # Prisma schema & migrations
 │ ├── migrations/
@@ -75,7 +75,7 @@ email-app-backend/
 ├── .env.example # copy to .env and fill in
 ├── app.js # Express app & route mounting
 └── package.json
-
+```
 ---
 ## 🔐 Environment Variables
 
