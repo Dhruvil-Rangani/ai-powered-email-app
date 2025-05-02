@@ -219,7 +219,7 @@ text
 
 ## 👨‍💻 Author
 
-Built with ❤️ by [Dhruvil Rangani] (https://dhruvilrangani.com)
+Built with ❤️ by [Dhruvil Rangani](https://dhruvilrangani.com)
 
 ---
 
