@@ -122,9 +122,9 @@ DEBUG_DATES=false
 ## 📬 API Endpoints
 
 All protected endpoints require header:
-
+```
 Authorization: Bearer <accessToken>
-
+```
 ### Auth
 
 | Method | Route                | Body                        | Description                              |
@@ -160,10 +160,10 @@ Authorization: Bearer <accessToken>
 ---
 
 ## ⚙️ Getting Started
-
+```
 #1. Clone & install
 git clone https://github.com/Dhruvil-Rangani/Ai-Powered-Email-APP.git
-cd your-repo
+cd email-app-backend/
 npm install
 
 #2. Copy & fill in your env
@@ -176,37 +176,42 @@ npx prisma generate
 
 #4. Start server
 npm run dev
-
+```
 ---
 
 ## 🧪 Quick curl Tests
 
 # Register
+```
 curl -X POST http://localhost:5000/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"alice@your-domain.com","password":"Test1234!"}'
-
+```
 # Login
+```
 curl -X POST http://localhost:5000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"alice@your-domain.com","password":"Test1234!"}'
-
+```
 # Fetch mails
+```
 curl http://localhost:5000/api/emails \
   -H "Authorization: Bearer <accessToken>"
-
+```
 # Send mail
+```
 curl -X POST http://localhost:5000/api/emails/send \
   -H "Authorization: Bearer <accessToken>" \
   -H "Content-Type: application/json" \
   -d '{"to":"bob@your-domain.com","subject":"Test","text":"Hello"}'
-
+```
 # AI chat
+```
 curl -X POST http://localhost:5000/api/ai/chat \
   -H "Authorization: Bearer <accessToken>" \
   -H "Content-Type: application/json" \
   -d '{"message":"Draft me a polite follow-up"}'
-
+```
 ---
 
 ## 👨‍💻 Author
