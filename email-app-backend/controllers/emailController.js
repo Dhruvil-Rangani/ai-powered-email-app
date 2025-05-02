@@ -36,9 +36,6 @@ const getInboxEmails = async (req, res) => {
   const { from, subject, body, after, before, folder } = req.query;
   const user = await prisma.user.findUnique({ where: { id: req.user.id } });
   if (!user) return res.sendStatus(404);
-  const filters = {
-    from, subject, body, after, before, folder
-  }
 
   try {
     const emails = await fetchInboxEmails({ 
@@ -47,7 +44,7 @@ const getInboxEmails = async (req, res) => {
       host:     process.env.IMAP_HOST,
       port:     Number(process.env.IMAP_PORT),
       tls:      true,
-      filters
+      from, subject, body, after, before, folder 
     });
     const threads = groupByThread(emails);
     res.status(200).json({ threads });
