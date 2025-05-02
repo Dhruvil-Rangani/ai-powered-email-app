@@ -76,48 +76,45 @@ email-app-backend/
 ├── app.js # Express app & route mounting
 └── package.json
 
-text
-
 ---
 
 ## 🔐 Environment Variables
 
 Copy `.env.example` → `.env` and fill in:
 
-Server
+```ini
+# Server
 PORT=5000
 
-PostgreSQL (Prisma)
+# PostgreSQL (Prisma)
 DATABASE_URL="postgresql://USER:PASS@HOST:5432/DBNAME?sslmode=require"
 
-JWT
+# JWT
 JWT_SECRET=your_jwt_secret
 JWT_EXPIRES=15m
 REFRESH_EXPIRES_DAYS=36500
 
-IMAP (incoming)
+# IMAP (incoming)
 IMAP_HOST=mail.your-domain.com
 IMAP_PORT=993
 
-SMTP (Mailjet or any SMTP)
+# SMTP (Mailjet or any SMTP)
 SMTP_HOST=in-v3.mailjet.com
 SMTP_PORT=587
 SMTP_USER=your_mailjet_key
 SMTP_PASS=your_mailjet_secret
 
-Virtual mailbox (Dovecot/Postfix)
+# Virtual mailbox (Dovecot/Postfix)
 VIRTUAL_DOMAIN=your-domain.com
 VMAIL_ROOT=/var/mail/vhosts
 
-OpenAI
+# OpenAI
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-4.1-nano
 OPENAI_MAX_TOKENS=1024
 
-Debug
+# Debug
 DEBUG_DATES=false
-
-text
 
 ---
 
@@ -126,8 +123,6 @@ text
 All protected endpoints require header:
 
 Authorization: Bearer <accessToken>
-
-text
 
 ### Auth
 
@@ -165,55 +160,51 @@ text
 
 ## ⚙️ Getting Started
 
-1. Clone & install
-git clone https://github.com/your-org/your-repo.git
+#1. Clone & install
+git clone https://github.com/Dhruvil-Rangani/Ai-Powered-Email-APP.git
 cd your-repo
 npm install
 
-2. Copy & fill in your env
+#2. Copy & fill in your env
 cp .env.example .env
+#edit .env with real credentials
 
-edit .env with real credentials
-3. Run migrations & generate Prisma client
+#3. Run migrations & generate Prisma client
 npx prisma migrate dev --name init
 npx prisma generate
 
-4. Start server
+#4. Start server
 npm run dev
-
-text
 
 ---
 
 ## 🧪 Quick curl Tests
 
-Register
-curl -X POST http://localhost:5000/api/auth/register
--H "Content-Type: application/json"
--d '{"email":"alice@your-domain.com","password":"Test1234!"}'
+# Register
+curl -X POST http://localhost:5000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"alice@your-domain.com","password":"Test1234!"}'
 
-Login
-curl -X POST http://localhost:5000/api/auth/login
--H "Content-Type: application/json"
--d '{"email":"alice@your-domain.com","password":"Test1234!"}'
+# Login
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"alice@your-domain.com","password":"Test1234!"}'
 
-Fetch mails
-curl http://localhost:5000/api/emails
--H "Authorization: Bearer <accessToken>"
+# Fetch mails
+curl http://localhost:5000/api/emails \
+  -H "Authorization: Bearer <accessToken>"
 
-Send mail
-curl -X POST http://localhost:5000/api/emails/send
--H "Authorization: Bearer <accessToken>"
--H "Content-Type: application/json"
--d '{"to":"bob@your-domain.com","subject":"Test","text":"Hello"}'
+# Send mail
+curl -X POST http://localhost:5000/api/emails/send \
+  -H "Authorization: Bearer <accessToken>" \
+  -H "Content-Type: application/json" \
+  -d '{"to":"bob@your-domain.com","subject":"Test","text":"Hello"}'
 
-AI chat
-curl -X POST http://localhost:5000/api/ai/chat
--H "Authorization: Bearer <accessToken>"
--H "Content-Type: application/json"
--d '{"message":"Draft me a polite follow-up"}'
-
-text
+# AI chat
+curl -X POST http://localhost:5000/api/ai/chat \
+  -H "Authorization: Bearer <accessToken>" \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Draft me a polite follow-up"}'
 
 ---
 
