@@ -1,6 +1,6 @@
-const Imap = require('node-imap');
+const Imap = require('imap');
 require('dotenv').config();
 
-const getImapConnection = ({ user, password, host, port, tls }) => new Imap({ user, password, host, port, tls });
+const getImapConnection = ({ user, password, host, port, tls}) => new Imap({ user, password, host, port, tls });
 
 module.exports = getImapConnection;

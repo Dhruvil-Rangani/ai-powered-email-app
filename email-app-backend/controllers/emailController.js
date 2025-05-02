@@ -10,7 +10,7 @@ const prisma               = new PrismaClient();
 // Send Email Controller
 const sendEmail = async (req, res) => {
   const { to, subject, text, html, attachments } = req.body;
-  const fromAddress = req.body.from || `"Dhruvil Rangani" <${process.env.EMAIL_USER}>`;
+  const fromAddress = req.body.from || `${req.user.email}`;
 
   console.log('📨 Request received:', { to, subject, text });
 
@@ -36,12 +36,18 @@ const getInboxEmails = async (req, res) => {
   const { from, subject, body, after, before, folder } = req.query;
   const user = await prisma.user.findUnique({ where: { id: req.user.id } });
   if (!user) return res.sendStatus(404);
+  const filters = {
+    from, subject, body, after, before, folder
+  }
 
   try {
     const emails = await fetchInboxEmails({ 
       user: user.email,
       password: user.imapPassword,
-      from, subject, body, after, before, folder 
+      host:     process.env.IMAP_HOST,
+      port:     Number(process.env.IMAP_PORT),
+      tls:      true,
+      filters
     });
     const threads = groupByThread(emails);
     res.status(200).json({ threads });
@@ -54,7 +60,14 @@ const getInboxEmails = async (req, res) => {
 // Download Attachment Controller
 const downloadAttachment = async (req, res) => {
   const { messageId, filename } = req.params;
-  const imap = getImapConnection();
+  const user = await prisma.user.findUnique({where:{id:req.user.id}});
+  const imap = getImapConnection({
+    user:     user.email,
+    password: user.imapPassword,
+    host:     process.env.IMAP_HOST,
+    port:     Number(process.env.IMAP_PORT),
+    tls:      true
+  });
 
   imap.once('ready', () => {
     imap.openBox('INBOX', true, () => {
