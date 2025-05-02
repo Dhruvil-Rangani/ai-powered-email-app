@@ -77,7 +77,6 @@ email-app-backend/
 └── package.json
 
 ---
-
 ## 🔐 Environment Variables
 
 Copy `.env.example` → `.env` and fill in:
@@ -115,6 +114,8 @@ OPENAI_MAX_TOKENS=1024
 
 # Debug
 DEBUG_DATES=false
+
+```
 
 ---
 
