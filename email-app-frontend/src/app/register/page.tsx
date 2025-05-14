@@ -5,17 +5,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function Login() {
+export default function Register() {
   const { register: reg, handleSubmit } = useForm<{ email: string; password: string }>();
   const auth = useAuth();
   const router = useRouter();
 
   async function onSubmit(v: any) {
     try {
-      await auth.login(v.email, v.password);
+      await auth.register(v.email, v.password);
       router.push('/inbox');
     } catch {
-      alert('Login failed');
+      alert('Registration failed');
     }
   }
 
@@ -27,7 +27,7 @@ export default function Login() {
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
       >
-        <h1 className="text-center text-2xl font-bold tracking-tight">Welcome back 👋</h1>
+        <h1 className="text-center text-2xl font-bold">Create account</h1>
 
         <input
           type="email"
@@ -37,7 +37,7 @@ export default function Login() {
         />
         <input
           type="password"
-          placeholder="••••••••"
+          placeholder="Choose a password"
           {...reg('password', { required: true })}
           className="input input-bordered w-full bg-slate-800"
         />
@@ -47,13 +47,13 @@ export default function Login() {
           whileTap={{ scale: 0.97 }}
           className="btn btn-primary w-full cursor-pointer"
         >
-          Sign in
+          Register
         </motion.button>
 
         <p className="text-center text-sm text-slate-400">
-          Don’t have an account?{' '}
-          <Link href="/register" className="text-indigo-400 hover:underline">
-            Register
+          Already have an account?{' '}
+          <Link href="/login" className="text-indigo-400 hover:underline">
+            Sign in
           </Link>
         </p>
       </motion.form>

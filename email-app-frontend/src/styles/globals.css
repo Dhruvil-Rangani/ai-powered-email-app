@@ -19,6 +19,21 @@
   }
 }
 
+@layer components {
+  .input {
+    @apply rounded-md px-3 py-2 outline-none ring-1 ring-slate-700 focus:ring-indigo-500 bg-slate-800;
+  }
+  .input-bordered {
+    @apply ring-1 ring-slate-700;
+  }
+  .btn {
+    @apply rounded-md bg-indigo-600 px-4 py-2 font-medium hover:bg-indigo-500;
+  }
+  .btn-primary {
+    @apply bg-indigo-600 hover:bg-indigo-500;
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

@@ -1,48 +1,107 @@
-// src/contexts/AuthContext.tsx
 'use client';
-import { createContext, useContext, useState, useEffect } from 'react';
-import api from '@/lib/api';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import api, { setAuthHeader } from '@/lib/api';
 
 type User = { id: string; email: string };
 
 interface AuthCtx {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (e: string, p: string) => Promise<void>;
+  register: (e: string, p: string) => Promise<void>;
   logout: () => void;
 }
 
-const Ctx = createContext<AuthCtx | null>(null);
+const Ctx = createContext<AuthCtx>({} as AuthCtx);
+export const useAuth = () => useContext(Ctx);
 
+/* --------------------------------------------------------- */
+/* helpers                                                   */
+/* --------------------------------------------------------- */
+const ACCESS = 'accessToken';
+const REFRESH = 'refreshToken';
+
+function decode(token: string): User {
+  const payload: any = jwtDecode(token);
+  return { id: payload.id, email: payload.email };
+}
+
+async function refreshAccess(refresh: string) {
+  const { data } = await api.post('/api/auth/refresh', { refreshToken: refresh });
+  localStorage.setItem(ACCESS, data.accessToken);
+  setAuthHeader(data.accessToken);
+  return decode(data.accessToken);
+}
+
+/* --------------------------------------------------------- */
+/* provider                                                  */
+/* --------------------------------------------------------- */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
+  /** Load persisted tokens on mount */
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      const payload: any = jwtDecode(token);
-      setUser({ id: payload.id, email: payload.email });
+    const access  = localStorage.getItem(ACCESS);
+    const refresh = localStorage.getItem(REFRESH);
+    if (access) {
+      try {
+        setUser(decode(access));
+        setAuthHeader(access);
+      } catch {
+        // if access token is corrupt/expired, try refresh
+        if (refresh) refreshAccess(refresh).then(setUser).catch(logout);
+      }
     }
   }, []);
 
-  async function login(email: string, password: string) {
+  /** register -> auto‑login */
+  const register = async (email: string, password: string) => {
+    await api.post('/api/auth/register', { email, password });
+    await login(email, password);
+  };
+
+  /** login flow */
+  const login = async (email: string, password: string) => {
     const { data } = await api.post('/api/auth/login', { email, password });
-    localStorage.setItem('accessToken', data.accessToken);
-    localStorage.setItem('refreshToken', data.refreshToken);
-    const payload: any = jwtDecode(data.accessToken);
-    setUser({ id: payload.id, email: payload.email });
-  }
+    localStorage.setItem(ACCESS, data.accessToken);
+    localStorage.setItem(REFRESH, data.refreshToken);
+    setAuthHeader(data.accessToken);
+    setUser({ id: decode(data.accessToken).id, email });
+  };
 
-  function logout() {
+  /** logout */
+  const logout = () => {
+    const refresh = localStorage.getItem(REFRESH);
+    if (refresh) api.post('/api/auth/logout', { refreshToken: refresh }).catch(() => {});
     localStorage.clear();
+    setAuthHeader(null);
     setUser(null);
-  }
+  };
 
-  return (
-    <Ctx.Provider value={{ user, login, logout }}>
-      {children}
-    </Ctx.Provider>
-  );
+  /** Axios response interceptor → auto‑refresh on 401 */
+  useEffect(() => {
+    const id = api.interceptors.response.use(
+      (r) => r,
+      async (err) => {
+        if (err.response?.status === 401) {
+          const refresh = localStorage.getItem(REFRESH);
+          if (refresh) {
+            try {
+              const newUser = await refreshAccess(refresh);
+              setUser(newUser);
+              // retry original request
+              err.config.headers.Authorization = api.defaults.headers.common.Authorization;
+              return api(err.config);
+            } catch {
+              logout();
+            }
+          } else logout();
+        }
+        return Promise.reject(err);
+      },
+    );
+    return () => api.interceptors.response.eject(id);
+  }, []);
+
+  return <Ctx.Provider value={{ user, login, register, logout }}>{children}</Ctx.Provider>;
 }
-
-export const useAuth = () => useContext(Ctx)!;
