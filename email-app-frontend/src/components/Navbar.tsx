@@ -8,6 +8,7 @@ export default function Navbar() {
     
     const isLoginPage = pathname === '/login';
     const isRegisterPage = pathname === '/register';
+    const isLandingPage = pathname === '/';
 
   return (
     <motion.nav
@@ -33,7 +34,7 @@ export default function Navbar() {
         >
           Register
         </Link>
-      ) : isRegisterPage ? (
+      ) : isRegisterPage || isLandingPage ? (
         <Link
           href="/login"
           className="rounded-md bg-indigo-500 px-4 py-2 text-sm font-medium hover:bg-indigo-400"
