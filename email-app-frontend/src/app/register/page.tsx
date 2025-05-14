@@ -5,12 +5,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+type RegisterForm = { email: string; password: string };
+
 export default function Register() {
-  const { register: reg, handleSubmit } = useForm<{ email: string; password: string }>();
+  const { register: reg, handleSubmit } = useForm<RegisterForm>();
   const auth = useAuth();
   const router = useRouter();
 
-  async function onSubmit(v: any) {
+  async function onSubmit(v: RegisterForm) {
     try {
       await auth.register(v.email, v.password);
       router.push('/inbox');

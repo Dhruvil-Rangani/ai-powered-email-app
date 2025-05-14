@@ -1,9 +1,10 @@
 'use client';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { jwtDecode } from 'jwt-decode';
+import { jwtDecode, JwtPayload  } from 'jwt-decode';
 import api, { setAuthHeader } from '@/lib/api';
 
 type User = { id: string; email: string };
+type TokenPayload = JwtPayload & { id: string; email: string };
 
 interface AuthCtx {
   user: User | null;
@@ -22,7 +23,7 @@ const ACCESS = 'accessToken';
 const REFRESH = 'refreshToken';
 
 function decode(token: string): User {
-  const payload: any = jwtDecode(token);
+  const payload = jwtDecode<TokenPayload>(token);
   return { id: payload.id, email: payload.email };
 }
 
@@ -55,14 +56,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   /** register -> auto‑login */
+  interface AuthResponse { accessToken: string, refreshToken: string }
   const register = async (email: string, password: string) => {
-    await api.post('/api/auth/register', { email, password });
+    await api.post<AuthResponse>('/api/auth/register', { email, password });
     await login(email, password);
   };
 
   /** login flow */
   const login = async (email: string, password: string) => {
-    const { data } = await api.post('/api/auth/login', { email, password });
+    const { data } = await api.post<AuthResponse>('/api/auth/login', { email, password });
     localStorage.setItem(ACCESS, data.accessToken);
     localStorage.setItem(REFRESH, data.refreshToken);
     setAuthHeader(data.accessToken);
