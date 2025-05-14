@@ -1,8 +1,14 @@
 'use client';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { usePathname } from 'next/navigation';
 
 export default function Navbar() {
+    const pathname = usePathname();
+    
+    const isLoginPage = pathname === '/login';
+    const isRegisterPage = pathname === '/register';
+
   return (
     <motion.nav
       className="fixed inset-x-0 top-0 z-30 flex items-center justify-between px-8 py-4 backdrop-blur-md"
@@ -20,12 +26,21 @@ export default function Navbar() {
         <Link href="#pricing" className="hover:text-indigo-300">Pricing</Link>
       </div>
 
-      <Link
-        href="/login"
-        className="rounded-md bg-indigo-500 px-4 py-2 text-sm font-medium hover:bg-indigo-400"
-      >
-        Login
-      </Link>
+      {isLoginPage ? (
+        <Link
+          href="/register"
+          className="rounded-md bg-indigo-500 px-4 py-2 text-sm font-medium hover:bg-indigo-400"
+        >
+          Register
+        </Link>
+      ) : isRegisterPage ? (
+        <Link
+          href="/login"
+          className="rounded-md bg-indigo-500 px-4 py-2 text-sm font-medium hover:bg-indigo-400"
+        >
+          Login
+        </Link>
+      ) : null}
     </motion.nav>
   );
 }

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Navbar from '@/components/Navbar';
 
 type RegisterForm = { email: string; password: string };
 
@@ -22,6 +23,8 @@ export default function Register() {
   }
 
   return (
+    <>
+    <Navbar />
     <main className="flex min-h-screen items-center justify-center bg-slate-950">
       <motion.form
         onSubmit={handleSubmit(onSubmit)}
@@ -60,5 +63,6 @@ export default function Register() {
         </p>
       </motion.form>
     </main>
+    </>
   );
 }
