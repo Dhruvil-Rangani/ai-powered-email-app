@@ -132,7 +132,7 @@ export default function Inbox() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ type: 'spring', stiffness: 90, damping: 14 }}
+              transition={{ type: 'tween', duration: 0.1 }}
               className="prose max-w-3xl prose-invert"
             >
               {threads[active].map((m) => (
