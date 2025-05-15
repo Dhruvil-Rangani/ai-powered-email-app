@@ -18,7 +18,7 @@ interface ThreadMsg {
 
 export default function Inbox() {
   const [loading, setLoading] = useState(true);
-  const { user, logout } = useAuth();
+  const { user, logout, initialized } = useAuth();
   const router = useRouter();
   const [threads, setThreads] = useState<ThreadMsg[][]>([]);
   const [active, setActive]   = useState<number | null>(null);
@@ -37,16 +37,21 @@ export default function Inbox() {
   }
 
   useEffect(() => {
+    // wait until AuthProvider has finished loading tokens
+    if (!initialized) return;
+
+    // if initialized & still no user, redirect to login
     if (!user) {
       router.push('/login');
       return;
     }
+
     setLoading(true);
     api
-      .get('/api/emails/inbox', { params: { limit: 20 } })   // fetch only 20 for speed
+      .get('/api/emails/inbox', { params: { limit: 20 } })
       .then(({ data }) => setThreads(data.threads))
       .finally(() => setLoading(false));
-  }, [user, router]);
+  }, [initialized, user, router]);
 
   return (
     <main className="flex min-h-screen bg-slate-950 text-slate-100">
