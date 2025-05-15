@@ -22,6 +22,16 @@ export const useAuth = () => useContext(Ctx);
 const ACCESS = 'accessToken';
 const REFRESH = 'refreshToken';
 
+/** check JWT expiry (true ⇢ already expired) */
+function isExpired(token: string) {
+  try {
+    const { exp } = jwtDecode<JwtPayload>(token);
+    return exp ? exp * 1000 < Date.now() : true;
+  } catch {
+    return true;
+  }
+}
+
 function decode(token: string): User {
   const payload = jwtDecode<TokenPayload>(token);
   return { id: payload.id, email: payload.email };
@@ -44,14 +54,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const access  = localStorage.getItem(ACCESS);
     const refresh = localStorage.getItem(REFRESH);
-    if (access) {
-      try {
-        setUser(decode(access));
-        setAuthHeader(access);
-      } catch {
-        // if access token is corrupt/expired, try refresh
-        if (refresh) refreshAccess(refresh).then(setUser).catch(logout);
-      }
+    if (access && !isExpired(access)) {
+      // access token still valid
+      setUser(decode(access));
+      setAuthHeader(access);
+    } else if (refresh) {
+      // try to get a fresh access token
+      refreshAccess(refresh).then(setUser).catch(logout);
     }
   }, []);
 
