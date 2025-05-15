@@ -33,7 +33,7 @@ const sendEmail = async (req, res) => {
 
 // Fetch Inbox Emails Controller
 const getInboxEmails = async (req, res) => {
-  const { from, subject, body, after, before, folder } = req.query;
+  const { from, subject, body, after, before, folder, limit } = req.query;
   const user = await prisma.user.findUnique({ where: { id: req.user.id } });
   if (!user) return res.sendStatus(404);
 
@@ -44,7 +44,8 @@ const getInboxEmails = async (req, res) => {
       host:     process.env.IMAP_HOST,
       port:     Number(process.env.IMAP_PORT),
       tls:      true,
-      from, subject, body, after, before, folder 
+      from, subject, body, after, before, folder,
+      limit: limit? Number(limit) : undefined
     });
     const threads = groupByThread(emails);
     res.status(200).json({ threads });

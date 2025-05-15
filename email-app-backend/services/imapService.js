@@ -14,6 +14,7 @@ const fetchInboxEmails = ({
   after,
   before,
   folder,
+  limit = 50,
 }) =>
   new Promise((resolve, reject) => {
     // now host/port/tls actually come through
@@ -36,10 +37,9 @@ const fetchInboxEmails = ({
       imap.openBox(mailFolder, true, (err, box) => {
         if (err) return reject(err);
 
-        const f = imap.seq.fetch(
-          `${Math.max(1, box.messages.total - 50)}:*`,
-          { bodies:'', struct:true }
-        );
+        const start = Math.max(1, box.messages.total - limit + 1);
+        const seqRange = `${start}:*`;
+        const f = imap.seq.fetch(seqRange, { bodies:'', struct:true });
 
         const parsers = [];
         f.on('message', msg => {
