@@ -2,7 +2,6 @@
 import '../styles/globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import type { ReactNode } from 'react';
-import Head from 'next/head';
 
 export const metadata = { 
   title: 'Custom Email App', 
