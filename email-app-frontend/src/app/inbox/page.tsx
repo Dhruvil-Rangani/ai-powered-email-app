@@ -6,6 +6,7 @@ import api from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { ArrowRightOnRectangleIcon, PaperClipIcon } from '@heroicons/react/24/outline';
 import FileSaver from 'file-saver';
+import io from 'socket.io-client';
 
 interface ThreadMsg {
   subject: string;
@@ -21,37 +22,63 @@ export default function Inbox() {
   const { user, logout, initialized } = useAuth();
   const router = useRouter();
   const [threads, setThreads] = useState<ThreadMsg[][]>([]);
-  const [active, setActive]   = useState<number | null>(null);
+  const [active, setActive] = useState<number | null>(null);
+  const [socket, setSocket] = useState<ReturnType<typeof io> | null>(null);
 
-  // —— helper to download an attachment ————————————————
+  // Download attachment helper
   async function handleDownload(messageId: string, filename: string) {
     try {
       const { data } = await api.get(
         `/api/emails/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(filename)}`,
         { responseType: 'blob' }
       );
-      FileSaver.saveAs(data, filename);      // or use URL.createObjectURL if you prefer
+      FileSaver.saveAs(data, filename);
     } catch {
       alert('Download failed');
     }
   }
 
   useEffect(() => {
-    // wait until AuthProvider has finished loading tokens
+    // Wait until auth initialization
     if (!initialized) return;
 
-    // if initialized & still no user, redirect to login
+    // Redirect if not logged in
     if (!user) {
       router.push('/login');
       return;
     }
 
+    // Fetch initial threads
     setLoading(true);
     api
       .get('/api/emails/inbox', { params: { limit: 20 } })
       .then(({ data }) => setThreads(data.threads))
       .finally(() => setLoading(false));
-  }, [initialized, user, router]);
+
+    // Setup real-time socket once
+    if (!socket) {
+      const s = io(process.env.NEXT_PUBLIC_API_URL as string, {
+        auth: { token: localStorage.getItem('accessToken') }
+      });
+      s.on('new_email', (email: ThreadMsg) => {
+        setThreads(prev => {
+          // Prevent duplicates: if first messageId already exists, ignore
+          if (prev.some(thread => thread[0].messageId === email.messageId)) {
+            return prev;
+          }
+          return [[email], ...prev];
+        });
+      });
+      setSocket(s);
+    }
+  }, [initialized, user, router, socket]);
+
+  // Cleanup socket on unmount
+  useEffect(() => {
+    return () => {
+      socket?.disconnect();
+    };
+  }, [socket]);
 
   return (
     <main className="flex min-h-screen bg-slate-950 text-slate-100">
