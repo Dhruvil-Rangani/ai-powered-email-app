@@ -85,7 +85,14 @@ export default function Inbox() {
       {/* Sidebar */}
       <aside className="w-80 border-r border-slate-800 p-5">
         <header className="mb-6 flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Inbox</h1>
+          <div className="flex items-center space-x-2">
+            <img
+              src="/logo.png"
+              alt="Logo"
+              className="h-6 w-6 object-contain"
+            />
+            <h1 className="text-xl font-semibold leading-none">Inbox</h1>
+          </div>
           <button onClick={logout} title="Logout">
             <ArrowRightOnRectangleIcon className="h-6 w-6 text-slate-400 hover:text-red-400 cursor-pointer" />
           </button>

@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
+import Logo from './Logo';
 
 export default function Navbar() {
     const pathname = usePathname();
@@ -17,8 +18,9 @@ export default function Navbar() {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6 }}
     >
-      <Link href="/" className="text-xl font-bold tracking-tight">
-        <span className="text-indigo-400">Mail</span>Craft
+      <Link href="/" className="flex item-center space-x-2 text-xl font-bold tracking-tight">
+        <Logo />
+        <span className="text-indigo-400">Dice</span>Mail
       </Link>
 
       <div className="hidden gap-6 md:flex">
