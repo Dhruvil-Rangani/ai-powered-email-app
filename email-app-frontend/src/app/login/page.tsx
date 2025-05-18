@@ -37,7 +37,7 @@ export default function Login() {
 
         <input
           type="email"
-          placeholder="you@your-domain.com"
+          placeholder="you@dhruvilrangani.com"
           {...reg('email', { required: true })}
           className="input input-bordered w-full bg-slate-800"
         />
