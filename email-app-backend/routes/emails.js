@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const { sendEmail, getInboxEmails, tagEmail, getEmailTags, getEmailsByTag } = require('../controllers/emailController');
 const { downloadAttachment } = require('../controllers/emailController');
+const upload  = require('../middleware/upload');    
 
 // Email Routes
-router.post('/send', sendEmail);
+router.post('/send', upload.array('attachments'), sendEmail); 
 router.get('/inbox', getInboxEmails);
 router.get("/", getInboxEmails);
 

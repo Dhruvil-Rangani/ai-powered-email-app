@@ -9,18 +9,25 @@ const prisma               = new PrismaClient();
 
 // Send Email Controller
 const sendEmail = async (req, res) => {
-  const { to, subject, text, html, attachments } = req.body;
+  const { to, subject, body, optionalHtml } = req.body;
   const fromAddress = req.body.from || `${req.user.email}`;
 
-  console.log('📨 Request received:', { to, subject, text });
+  // same files you appended in FormData → req.files ([]), each has buffer / mimetype
+  const attachments =
+    req.files?.map((f) => ({
+      filename: f.originalname,
+      content:  f.buffer,
+      contentType: f.mimetype,
+    })) || [];
+
 
   try {
     const info = await transporter.sendMail({
       from: fromAddress,
       to,
       subject,
-      text,
-      html,
+      text: body,      // nodemailer “text” field
+      html: optionalHtml,
       attachments,
     });
 
