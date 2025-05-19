@@ -129,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     );
     return () => api.interceptors.response.eject(id);
-  }, []);
+  }, [initialized, logout]);
 
   return (
     <Ctx.Provider value={{ user, login, register, logout, initialized }}>

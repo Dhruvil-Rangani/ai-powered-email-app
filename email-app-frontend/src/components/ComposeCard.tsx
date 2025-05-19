@@ -5,6 +5,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useForm } from 'react-hook-form';
 import api from '@/lib/api';
 import { useState } from 'react';
+import { AxiosError } from 'axios';
 
 interface Props {
     onClose?: () => void;
@@ -42,8 +43,9 @@ export default function ComposeCard({ onClose, afterSend }: Props) {
             reset();
             afterSend?.();
             onClose?.();
-        } catch (err: any) {
-            setError(err.response?.data?.message ?? 'Failed to send email');
+        } catch (err) {
+            const error = err as AxiosError<{ message: string }>;
+            setError(error.response?.data?.message ?? 'Failed to send email');
         }
     }
 

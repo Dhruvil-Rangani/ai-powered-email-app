@@ -14,6 +14,7 @@ import {
 import FileSaver from 'file-saver';
 import io from 'socket.io-client';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 
 const ComposeCard = dynamic(() => import('@/components/ComposeCard'), { ssr: false });
 
@@ -113,7 +114,7 @@ export default function Inbox() {
       <aside className="w-80 border-r border-slate-800 p-5">
         <header className="mb-6 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <img src="/logo.png" alt="Logo" className="h-6 w-6 object-contain" />
+            <Image src="/logo.png" alt="Logo" className="h-6 w-6 object-contain" />
             <h1 className="text-xl font-semibold leading-none">Inbox</h1>
           </div>
           <button onClick={logout} title="Logout">
