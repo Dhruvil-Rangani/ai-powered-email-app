@@ -55,7 +55,7 @@ export default function FeatureGrid() {
         viewport={{ once: true }}
         className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4"
       >
-        {FEATURES.map(({ Icon, title, desc }, i) => (
+        {FEATURES.map(({ Icon, title, desc }) => (
           <motion.div
             key={title}
             variants={item}
@@ -67,7 +67,7 @@ export default function FeatureGrid() {
             <div className="relative overflow-hidden rounded-xl bg-slate-900/60 p-6 backdrop-blur-sm ring-1 ring-slate-800 transition-all duration-300 group-hover:ring-indigo-500/50">
               {/* Gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-              
+
               {/* Content */}
               <div className="relative">
                 <motion.div
@@ -77,7 +77,7 @@ export default function FeatureGrid() {
                 >
                   <Icon className="h-6 w-6 text-indigo-400" />
                 </motion.div>
-                
+
                 <h3 className="mb-2 text-lg font-semibold text-white group-hover:text-indigo-400 transition-colors">
                   {title}
                 </h3>
