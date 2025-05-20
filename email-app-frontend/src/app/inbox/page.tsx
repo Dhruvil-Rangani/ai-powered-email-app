@@ -38,14 +38,6 @@ function getGravatarUrl(email: string): string {
   return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
 }
 
-function getInitials(sender: string) {
-  const name = sender.split('<')[0].trim();
-  return name
-    .split(/\s+/)
-    .map((s) => s[0]?.toUpperCase())
-    .join('')
-    .slice(0, 2);
-}
 
 export default function Inbox() {
   const [loading, setLoading] = useState(true);
@@ -73,19 +65,20 @@ export default function Inbox() {
   }
 
   async function handleReply(original: ThreadMsg) {
-    try {
-      await api.post('/api/emails/send', {
-        to: original.from,
-        subject: `Re: ${original.subject}`,
-        body: replyContent,
-        inReplyTo: original.messageId,
-        references: [original.messageId, ...(original.references || [])],
-      });
-      setReplyContent('');
-    } catch (err) {
-      alert('Failed to send reply');
-    }
+  try {
+    await api.post('/api/emails/send', {
+      to: original.from,
+      subject: `Re: ${original.subject}`,
+      body: replyContent,
+      inReplyTo: original.messageId,
+      references: [original.messageId, ...(original.references || [])],
+    });
+    setReplyContent('');
+  } catch {
+    alert('Failed to send reply');
   }
+}
+
 
   useEffect(() => {
     if (!initialized) return;
@@ -159,9 +152,8 @@ export default function Inbox() {
                 key={first.messageId}
                 onClick={() => setActive(idx)}
                 whileHover={{ scale: 1.02 }}
-                className={`cursor-pointer rounded-md p-3 transition-all ${
-                  isActive ? 'bg-indigo-500/20 ring-1 ring-indigo-400' : 'hover:bg-slate-800/60'
-                } ${isNew ? 'ring-2 ring-green-400/70' : ''}`}
+                className={`cursor-pointer rounded-md p-3 transition-all ${isActive ? 'bg-indigo-500/20 ring-1 ring-indigo-400' : 'hover:bg-slate-800/60'
+                  } ${isNew ? 'ring-2 ring-green-400/70' : ''}`}
               >
                 <p className="truncate font-medium">{first.subject || '(no subject)'}</p>
                 <p className="truncate text-xs text-slate-400">{first.from}</p>
@@ -191,10 +183,12 @@ export default function Inbox() {
               {threads[active].map((m, i) => (
                 <article key={m.messageId} className="rounded-md border border-slate-700 bg-slate-900 p-6 shadow-md">
                   <div className="flex items-start gap-4 mb-4">
-                    <img
+                    <Image
                       src={getGravatarUrl(m.from.split('<')[1]?.replace('>', '') || '')}
                       alt="avatar"
-                      className="h-10 w-10 rounded-full"
+                      width={40}
+                      height={40}
+                      className="rounded-full"
                     />
                     <div className="flex-1">
                       <h2 className="text-lg font-semibold text-white">{m.subject || '(no subject)'}</h2>
