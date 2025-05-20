@@ -121,8 +121,8 @@ export default function Inbox() {
   }, []);
 
   return (
-    <main className="flex min-h-screen bg-slate-950 text-slate-100">
-      <aside className="w-80 border-r border-slate-800 p-5">
+    <main className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden">
+      <aside className="w-80 border-r border-slate-800 p-5 flex flex-col h-full overflow-hidden">
         <header className="mb-6 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Image src="/logo.png" alt="Logo" width={24} height={24} />
@@ -141,7 +141,7 @@ export default function Inbox() {
         </button>
 
         {loading && <p className="text-slate-400">Fetching your data…</p>}
-        <ul ref={listRef} className="space-y-2 overflow-y-auto">
+        <ul ref={listRef} className="space-y-2 overflow-y-auto h-[calc(100vh-180px)] pr-1 scrollbar-thin scrollbar-thumb-slate-500 scrollbar-track-transparent">
           {threads.map((t, idx) => {
             const first = t[0];
             const snippet = first.text?.slice(0, 50).replace(/\s+/g, ' ') || '';
@@ -169,7 +169,7 @@ export default function Inbox() {
         </ul>
       </aside>
 
-      <section className="flex-1 p-8 overflow-y-auto">
+      <section className="flex-1 p-8 overflow-y-auto h-screen scrollbar-thin scrollbar-thumb-slate-500 scrollbar-track-transparent">
         <AnimatePresence mode="wait">
           {active !== null ? (
             <motion.div
