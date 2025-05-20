@@ -1,12 +1,18 @@
 'use client';
 import { motion } from 'framer-motion';
-import { CheckCircleIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, FunnelIcon , InboxIcon, TagIcon, ShieldCheckIcon, ServerStackIcon, ChatBubbleLeftRightIcon} from '@heroicons/react/24/outline';
 
 const FEATURES = [
-  { Icon: CheckCircleIcon, title: 'Per-User IMAP', desc: 'Dynamic credentials, one inbox per user.' },
-  { Icon: SparklesIcon,    title: 'AI Drafting',   desc: 'Polite replies & job-hunt boosters on tap.' },
-  { Icon: CheckCircleIcon, title: 'Threaded View', desc: 'Messages grouped like Gmail - no clutter.' },
-  { Icon: CheckCircleIcon, title: 'Tag & Filter',  desc: 'Label emails and query by tag.' },
+  { Icon: ServerStackIcon, title: 'Per-User IMAP', desc: 'Dynamic credentials, one inbox per user.' },
+  { Icon: SparklesIcon, title: 'AI Drafting', desc: 'Polite replies & job-hunt boosters on tap.' },
+  { Icon: ChatBubbleLeftRightIcon, title: 'Threaded View', desc: 'Messages grouped like Gmail - no clutter.' },
+  { Icon: FunnelIcon , title: 'Tag & Filter', desc: 'Label emails and query by tag.' },
+  { Icon: InboxIcon, title: 'Threaded Conversations', desc: 'Group emails just like Gmail.' },
+  { Icon: TagIcon, title: 'Smart Tagging', desc: 'Organize with labels and filters.' },
+  { Icon: SparklesIcon, title: 'GPT Drafting', desc: 'Write better emails, faster.' },
+  { Icon: ShieldCheckIcon, title: '100% Self-Hosted', desc: 'Postfix, Dovecot, IMAP, and SMTP on your server.' },
+
+
 ];
 
 export default function FeatureGrid() {

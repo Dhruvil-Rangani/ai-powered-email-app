@@ -12,7 +12,8 @@ export default function Hero() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
       >
-        Own&nbsp;your&nbsp;inbox.<br className="hidden md:block" />
+        Own&nbsp;your&nbsp;inbox. <br className="hidden md:block" />
+        <span className="text-indigo-400">AI-powered email, 100% self-hosted.</span> <br className="hidden md:block" />
         <span className="text-indigo-400">Send, receive &amp; automate</span> on your domain.
       </motion.h1>
 
@@ -22,7 +23,7 @@ export default function Hero() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2 }}
       >
-        A privacy-first email service with AI drafting, tagging and job-hunt tools - running entirely on your own server.
+        A secure email workspace that runs on your VPS. Draft with AI, manage with threads, tags, filters, and smart replies.
       </motion.p>
 
       <motion.div
