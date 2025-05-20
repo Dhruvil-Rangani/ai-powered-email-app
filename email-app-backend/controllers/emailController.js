@@ -1,33 +1,33 @@
+// === controllers/emailController.js ===
 const transporter = require('../config/smtp');
 const { fetchInboxEmails } = require('../services/imapService');
 const { groupByThread } = require('../services/threadService');
 const getImapConnection = require('../config/imap');
 const { simpleParser } = require('mailparser');
 const { addTag, getTags, filterEmailsByTag } = require('../services/tagService');
-const { PrismaClient }     = require('@prisma/client');
-const prisma               = new PrismaClient();
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 // Send Email Controller
 const sendEmail = async (req, res) => {
-  const { to, subject, body, optionalHtml } = req.body;
+  const { to, subject, body, optionalHtml, inReplyTo, references } = req.body;
   const fromAddress = req.body.from || `${req.user.email}`;
-
-  // same files you appended in FormData → req.files ([]), each has buffer / mimetype
   const attachments =
     req.files?.map((f) => ({
       filename: f.originalname,
-      content:  f.buffer,
+      content: f.buffer,
       contentType: f.mimetype,
     })) || [];
-
 
   try {
     const info = await transporter.sendMail({
       from: fromAddress,
       to,
       subject,
-      text: body,      // nodemailer “text” field
+      text: body,
       html: optionalHtml,
+      inReplyTo,
+      references,
       attachments,
     });
 
@@ -38,21 +38,21 @@ const sendEmail = async (req, res) => {
   }
 };
 
-// Fetch Inbox Emails Controller
+// Fetch Inbox Emails
 const getInboxEmails = async (req, res) => {
   const { from, subject, body, after, before, folder, limit } = req.query;
   const user = await prisma.user.findUnique({ where: { id: req.user.id } });
   if (!user) return res.sendStatus(404);
 
   try {
-    const emails = await fetchInboxEmails({ 
+    const emails = await fetchInboxEmails({
       user: user.email,
       password: user.imapPassword,
-      host:     process.env.IMAP_HOST,
-      port:     Number(process.env.IMAP_PORT),
-      tls:      true,
+      host: process.env.IMAP_HOST,
+      port: Number(process.env.IMAP_PORT),
+      tls: true,
       from, subject, body, after, before, folder,
-      limit: limit? Number(limit) : undefined
+      limit: limit ? Number(limit) : undefined,
     });
     const threads = groupByThread(emails);
     res.status(200).json({ threads });
@@ -62,32 +62,30 @@ const getInboxEmails = async (req, res) => {
   }
 };
 
-// Download Attachment Controller
+// Download Attachment
 const downloadAttachment = async (req, res) => {
   const { messageId, filename } = req.params;
-  const user = await prisma.user.findUnique({where:{id:req.user.id}});
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+
   const imap = getImapConnection({
-    user:     user.email,
+    user: user.email,
     password: user.imapPassword,
-    host:     process.env.IMAP_HOST,
-    port:     Number(process.env.IMAP_PORT),
-    tls:      true
+    host: process.env.IMAP_HOST,
+    port: Number(process.env.IMAP_PORT),
+    tls: true,
   });
 
   imap.once('ready', () => {
     imap.openBox('INBOX', true, () => {
-      const searchQuery = [['HEADER', 'Message-ID', messageId]];
-
-      imap.search(searchQuery, (err, results) => {
+      imap.search([['HEADER', 'Message-ID', messageId]], (err, results) => {
         if (err || !results.length) {
           imap.end();
           return res.status(404).json({ error: 'Email not found' });
         }
 
         const fetch = imap.fetch(results, { bodies: '', struct: true });
-
-        fetch.on('message', msg => {
-          msg.on('body', stream => {
+        fetch.on('message', (msg) => {
+          msg.on('body', (stream) => {
             simpleParser(stream, (err, parsed) => {
               const attachment = parsed.attachments?.find(att => att.filename === filename);
               if (!attachment) {
@@ -117,7 +115,7 @@ const downloadAttachment = async (req, res) => {
   imap.connect();
 };
 
-// Add tag to an email
+// Add Tag to Email
 const tagEmail = async (req, res) => {
   const { messageId, label } = req.body;
   const userId = req.user.id;
@@ -130,7 +128,7 @@ const tagEmail = async (req, res) => {
   }
 };
 
-// Get tags for a specific email
+// Get Tags for One Email
 const getEmailTags = async (req, res) => {
   try {
     const tags = await getTags(req.params.userId, req.params.messageId);
@@ -140,21 +138,21 @@ const getEmailTags = async (req, res) => {
   }
 };
 
-// Get all emails tagged with a specific label
+// Get All Emails Tagged with a Label
 const getEmailsByTag = async (req, res) => {
   try {
     const tags = await filterEmailsByTag(req.params.userId, req.params.label);
-    res.json(tags); // You can enhance this to fetch email details too
+    res.json(tags);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch tagged emails', details: err.message });
   }
 };
 
-module.exports = { 
-  sendEmail, 
-  getInboxEmails, 
+module.exports = {
+  sendEmail,
+  getInboxEmails,
   downloadAttachment,
   tagEmail,
   getEmailTags,
-  getEmailsByTag 
+  getEmailsByTag,
 };
