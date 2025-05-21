@@ -11,6 +11,7 @@ export default function Navbar() {
   const isLoginPage    = pathname === '/login';
   const isRegisterPage = pathname === '/register';
   const isLandingPage  = pathname === '/';
+  const isInboxPage    = pathname === '/inbox';
 
   /* ───────── scroll / hover state ───────── */
   const { scrollY } = useScroll();
@@ -29,6 +30,9 @@ export default function Navbar() {
   useEffect(() => {
     if (isHovered) setIsExpanded(true);
   }, [isHovered]);
+
+  // Don't render navbar in inbox
+  if (isInboxPage) return null;
 
   return (
     <motion.nav
