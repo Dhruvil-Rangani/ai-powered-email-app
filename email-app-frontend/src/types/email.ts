@@ -12,4 +12,18 @@ export interface EmailThread {
     subject: string;
     messages: EmailMessage[];
     unread: boolean;
+}
+
+export interface ThreadMsg {
+    subject: string;
+    from: string;
+    to?: string;
+    cc?: string;
+    date: string;
+    text: string;
+    html?: string;
+    messageId: string;
+    inReplyTo?: string;
+    references?: string[];
+    attachments?: { filename: string; size?: number }[];
 } 

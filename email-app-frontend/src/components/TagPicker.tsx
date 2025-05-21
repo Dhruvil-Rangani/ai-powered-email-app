@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, XMarkIcon, TagIcon } from '@heroicons/react/24/outline';
 import TagChip from './TagChip';
 
 interface TagPickerProps {
@@ -23,6 +23,7 @@ export default function TagPicker({
     const [newTag, setNewTag] = useState('');
     const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     // Close picker when clicking outside
     useEffect(() => {
@@ -36,12 +37,20 @@ export default function TagPicker({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    // Focus input when opening
+    useEffect(() => {
+        if (isOpen && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [isOpen]);
+
     // Handle adding a new tag
     const handleAddTag = () => {
         const tag = newTag.trim();
         if (tag && !existingTags.includes(tag)) {
             onAddTag(tag);
             setNewTag('');
+            setIsOpen(false);
         }
     };
 
@@ -57,24 +66,14 @@ export default function TagPicker({
 
     return (
         <div ref={containerRef} className={`relative ${className}`}>
-            {/* Tag list */}
-            <div className="flex flex-wrap gap-1">
-                {existingTags.map((tag) => (
-                    <TagChip
-                        key={tag}
-                        label={tag}
-                        onRemove={() => onRemoveTag(tag)}
-                        isRemovable
-                    />
-                ))}
-                <button
-                    onClick={() => setIsOpen(true)}
-                    className="inline-flex items-center gap-1 rounded-full bg-slate-700/50 px-2 py-0.5 text-xs font-medium text-slate-300 hover:bg-slate-700"
-                >
-                    <PlusIcon className="h-3 w-3" />
-                    Add tag
-                </button>
-            </div>
+            <button
+                onClick={() => setIsOpen(true)}
+                className="inline-flex items-center gap-1 rounded-md bg-slate-700/50 px-2 py-1 text-xs font-medium text-slate-300 hover:bg-slate-700 transition-colors cursor-pointer"
+            >
+                <TagIcon className="h-3 w-3" />
+                <span className="hidden sm:inline">Add tag</span>
+                <PlusIcon className="h-3 w-3" />
+            </button>
 
             {/* Tag picker popover */}
             <AnimatePresence>
@@ -83,21 +82,23 @@ export default function TagPicker({
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="absolute left-0 top-full z-50 mt-2 w-64 rounded-lg bg-slate-800 p-2 shadow-lg ring-1 ring-slate-700/50"
+                        className="absolute right-0 top-full z-50 mt-1 w-72 rounded-lg bg-slate-800 p-3 shadow-lg ring-1 ring-slate-700/50"
+                        style={{ transform: 'translateX(0)' }}
                     >
                         <div className="mb-2 flex items-center justify-between">
-                            <h3 className="text-sm font-medium text-slate-200">Add tags</h3>
+                            <h3 className="text-sm font-medium text-slate-200">Add tag</h3>
                             <button
                                 onClick={() => setIsOpen(false)}
                                 className="rounded-full p-1 hover:bg-slate-700"
                             >
-                                <XMarkIcon className="h-4 w-4 text-slate-400" />
+                                <XMarkIcon className="h-4 w-4 text-slate-400 cursor-pointer" />
                             </button>
                         </div>
 
                         {/* New tag input */}
-                        <div className="mb-2 flex gap-1">
+                        <div className="flex gap-2">
                             <input
+                                ref={inputRef}
                                 type="text"
                                 value={newTag}
                                 onChange={(e) => setNewTag(e.target.value)}
@@ -108,7 +109,7 @@ export default function TagPicker({
                             <button
                                 onClick={handleAddTag}
                                 disabled={!newTag.trim()}
-                                className="rounded-md bg-indigo-500 px-2 py-1 text-sm font-medium text-white hover:bg-indigo-600 disabled:opacity-50"
+                                className="flex-shrink-0 rounded-md bg-indigo-500 px-3 py-1 text-sm font-medium text-white hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                             >
                                 Add
                             </button>

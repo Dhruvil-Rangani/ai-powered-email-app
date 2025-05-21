@@ -1,15 +1,15 @@
 'use client';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import api from '@/lib/api';
 
 interface AuthCtx {
     user: {
         id: string;
         email: string;
-        name: string;
     } | null;
     token: string | null;
     login: (email: string, password: string) => Promise<void>;
-    logout: () => void;
+    logout: () => Promise<void>;
     loading: boolean;
 }
 
@@ -17,7 +17,7 @@ const AuthContext = createContext<AuthCtx>({
     user: null,
     token: null,
     login: async () => {},
-    logout: () => {},
+    logout: async () => {},
     loading: true
 });
 
@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         // Check for stored auth data
-        const storedToken = localStorage.getItem('token');
+        const storedToken = localStorage.getItem('accessToken');
         const storedUser = localStorage.getItem('user');
         
         if (storedToken && storedUser) {
@@ -43,33 +43,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const login = async (email: string, password: string) => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, password })
-            });
-
-            if (!response.ok) throw new Error('Login failed');
+            const { data } = await api.post('/api/auth/login', { email, password });
             
-            const data = await response.json();
-            setToken(data.token);
-            setUser(data.user);
+            // Store tokens
+            localStorage.setItem('accessToken', data.accessToken);
+            localStorage.setItem('refreshToken', data.refreshToken);
             
-            // Store auth data
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
+            // Extract user info from token
+            const payload = JSON.parse(atob(data.accessToken.split('.')[1]));
+            const userData = { id: payload.id, email: payload.email };
+            
+            setToken(data.accessToken);
+            setUser(userData);
+            localStorage.setItem('user', JSON.stringify(userData));
         } catch (error) {
             throw error;
         }
     };
 
-    const logout = () => {
-        setUser(null);
-        setToken(null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+    const logout = async () => {
+        try {
+            const refreshToken = localStorage.getItem('refreshToken');
+            if (refreshToken) {
+                await api.post('/api/auth/logout', { refreshToken });
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            setUser(null);
+            setToken(null);
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+        }
     };
 
     return (

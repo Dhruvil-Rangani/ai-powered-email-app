@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { EmailThread, EmailMessage } from '@/types/email';
+import api from '@/lib/api';
 
 export interface SearchFilters {
     from?: string;
@@ -102,18 +103,46 @@ export const useInbox = () => {
         }
     }, [token, fetchThreads]);
 
-    const addTag = useCallback(async (messageId: string, tag: string) => {
+    const addTag = useCallback(async (messageId: string, label: string) => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/email/messages/${messageId}/tags`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ tag })
+            const response = await api.post('/api/email/tags', { 
+                messageId, 
+                label 
             });
 
-            if (!response.ok) throw new Error('Failed to add tag');
+            if (!response.data) throw new Error('Failed to add tag');
+            
+            // Update local state with the new tag
+            setThreads(prevThreads => 
+                prevThreads.map(thread => ({
+                    ...thread,
+                    messages: thread.messages.map((msg: EmailMessage) => 
+                        msg.id === messageId 
+                            ? { ...msg, tags: [...(msg.tags || []), label] }
+                            : msg
+                    )
+                }))
+            );
+            return response.data;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to add tag';
+            setError(errorMessage);
+            throw new Error(errorMessage);
+        }
+    }, []);
+
+    const removeTag = useCallback(async (messageId: string, label: string) => {
+        try {
+            // First get the tag ID for the label
+            const { data: tags } = await api.get(`/api/email/tags/${messageId}`);
+            const tagToRemove = tags.find((t: { label: string }) => t.label === label);
+            
+            if (!tagToRemove) {
+                throw new Error('Tag not found');
+            }
+
+            // Then delete using the tag ID
+            await api.delete(`/api/email/tags/${messageId}/${tagToRemove.id}`);
             
             // Update local state
             setThreads(prevThreads => 
@@ -121,42 +150,17 @@ export const useInbox = () => {
                     ...thread,
                     messages: thread.messages.map((msg: EmailMessage) => 
                         msg.id === messageId 
-                            ? { ...msg, tags: [...(msg.tags || []), tag] }
+                            ? { ...msg, tags: (msg.tags || []).filter(t => t !== label) }
                             : msg
                     )
                 }))
             );
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to add tag');
+            const errorMessage = err instanceof Error ? err.message : 'Failed to remove tag';
+            setError(errorMessage);
+            throw new Error(errorMessage);
         }
-    }, [token]);
-
-    const removeTag = useCallback(async (messageId: string, tag: string) => {
-        try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/email/messages/${messageId}/tags/${encodeURIComponent(tag)}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) throw new Error('Failed to remove tag');
-            
-            // Update local state
-            setThreads(prevThreads => 
-                prevThreads.map(thread => ({
-                    ...thread,
-                    messages: thread.messages.map((msg: EmailMessage) => 
-                        msg.id === messageId 
-                            ? { ...msg, tags: (msg.tags || []).filter((t: string) => t !== tag) }
-                            : msg
-                    )
-                }))
-            );
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to remove tag');
-        }
-    }, [token]);
+    }, []);
 
     // Initial fetch
     useEffect(() => {

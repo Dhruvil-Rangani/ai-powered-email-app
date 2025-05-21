@@ -2,12 +2,14 @@ import axios from 'axios';
 
 /**
  * Central Axios instance.
- * ‑ baseURL comes from NEXT_PUBLIC_API_URL  (falls back to Render URL)
- * ‑ withCredentials = false  (tokens travel via Authorization header)
+ * ‑ baseURL comes from NEXT_PUBLIC_API_URL (falls back to http://localhost:5000)
+ * ‑ withCredentials = false (tokens travel via Authorization header)
  */
 const api = axios.create({
-  baseURL:
-    process.env.NEXT_PUBLIC_API_URL
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
+  headers: {
+    'Content-Type': 'application/json'
+  }
 });
 
 // Add request interceptor for auth token

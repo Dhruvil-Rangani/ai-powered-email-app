@@ -10,27 +10,14 @@ import {
   ArrowRightOnRectangleIcon,
   PencilSquareIcon,
 } from '@heroicons/react/24/outline';
-import io from 'socket.io-client';
+import io, { Socket } from 'socket.io-client';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import EmailMessage from '@/components/EmailMessage';
 import { ComposeProvider } from '@/contexts/ComposeContext';
+import { ThreadMsg } from '@/types/email';
 
 const ComposeCard = dynamic(() => import('@/components/ComposeCard'), { ssr: false });
-
-interface ThreadMsg {
-  subject: string;
-  from: string;
-  to?: string;
-  cc?: string;
-  date: string;
-  text: string;
-  html?: string;
-  messageId: string;
-  inReplyTo?: string;
-  references?: string[];
-  attachments?: { filename: string; size?: number }[];
-}
 
 function InboxContent() {
   const [loading, setLoading] = useState(true);
@@ -96,8 +83,25 @@ function InboxContent() {
         .finally(() => setLoading(false));
 
       if (!socketRef.current) {
-        socketRef.current = io(process.env.NEXT_PUBLIC_API_URL as string, {
-          auth: { token: localStorage.getItem('accessToken') },
+        const accessToken = localStorage.getItem('accessToken');
+        if (!accessToken) {
+          console.error('No access token found');
+          return;
+        }
+
+        socketRef.current = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000', {
+          auth: { token: accessToken },
+          transports: ['websocket'],
+          reconnection: true,
+          reconnectionAttempts: 5,
+          reconnectionDelay: 1000
+        });
+
+        socketRef.current.on('connect_error', (error: Error) => {
+          console.error('Socket connection error:', error);
+          if (error.message === 'Authentication failed') {
+            router.push('/login');
+          }
         });
 
         socketRef.current.on('new_email', (email: ThreadMsg) => {

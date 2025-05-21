@@ -87,7 +87,7 @@ export default function EmailMessage({ message, onReply, onDownload, isLastInThr
       isLastInThread ? 'mb-0' : 'mb-4'
     }`}>
       {/* Header */}
-      <div className="flex items-start justify-between border-b border-slate-700 p-4">
+      <div className="flex items-start justify-between p-4">
         <div className="flex items-start gap-4">
           <Image
             src={getGravatarUrl(emailAddress)}
@@ -112,25 +112,24 @@ export default function EmailMessage({ message, onReply, onDownload, isLastInThr
                 )}
               </button>
             </div>
-            <div className="mt-1 space-y-1 text-sm">
+            
+            <p className="text-slate-300">
+              <span className="text-slate-400">From: </span>
+              {formatEmailAddress(message.from)}
+            </p>
+            {message.to && (
               <p className="text-slate-300">
-                <span className="text-slate-400">From: </span>
-                {formatEmailAddress(message.from)}
+                <span className="text-slate-400">To: </span>
+                {formatEmailAddress(message.to)}
               </p>
-              {message.to && (
-                <p className="text-slate-300">
-                  <span className="text-slate-400">To: </span>
-                  {formatEmailAddress(message.to)}
-                </p>
-              )}
-              {message.cc && (
-                <p className="text-slate-300">
-                  <span className="text-slate-400">Cc: </span>
-                  {formatEmailAddress(message.cc)}
-                </p>
-              )}
-              <p className="text-slate-400 text-xs">{formattedDate}</p>
-            </div>
+            )}
+            {message.cc && (
+              <p className="text-slate-300">
+                <span className="text-slate-400">Cc: </span>
+                {formatEmailAddress(message.cc)}
+              </p>
+            )}
+            <p className="text-slate-400 text-xs">{formattedDate}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -139,6 +138,13 @@ export default function EmailMessage({ message, onReply, onDownload, isLastInThr
               {message.attachments.length} attachment{message.attachments.length !== 1 ? 's' : ''}
             </span>
           )}
+          <TagPicker
+            messageId={message.messageId}
+            existingTags={tags.map(t => t.label)}
+            onAddTag={(label) => addTag(message.messageId, label)}
+            onRemoveTag={(label) => removeTag(message.messageId, label)}
+            className="mr-2"
+          />
           <button
             onClick={() => setIsReplying(!isReplying)}
             className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
@@ -147,6 +153,25 @@ export default function EmailMessage({ message, onReply, onDownload, isLastInThr
             Reply
           </button>
         </div>
+      </div>
+
+      {/* Tags Section - Moved below header */}
+      <div className="flex items-center gap-2 border-b border-slate-700 bg-slate-800/50 px-4 py-2">
+        <div className="flex flex-wrap items-center gap-1">
+          {tags.map((tag) => (
+            <TagChip
+              key={tag.id}
+              label={tag.label}
+              onRemove={() => removeTag(message.messageId, tag.label)}
+              isRemovable
+            />
+          ))}
+        </div>
+        {tagsError && (
+          <div className="text-sm text-red-400">
+            {tagsError}
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -251,36 +276,6 @@ export default function EmailMessage({ message, onReply, onDownload, isLastInThr
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Tags Section */}
-      <div className="flex flex-col items-end gap-2">
-        <div className="flex flex-wrap gap-1">
-          {tags.map((tag) => (
-            <TagChip
-              key={tag.id}
-              label={tag.label}
-              onRemove={() => removeTag(message.messageId, tag.id)}
-              isRemovable
-            />
-          ))}
-        </div>
-        <TagPicker
-          messageId={message.messageId}
-          existingTags={tags.map(t => t.label)}
-          onAddTag={(label) => addTag(message.messageId, label)}
-          onRemoveTag={(label) => {
-            const tag = tags.find(t => t.label === label);
-            if (tag) removeTag(message.messageId, tag.id);
-          }}
-        />
-      </div>
-
-      {/* Error Display */}
-      {tagsError && (
-        <div className="mt-4 rounded-md bg-red-500/10 p-3 text-sm text-red-400">
-          {tagsError}
-        </div>
-      )}
     </article>
   );
 } 
