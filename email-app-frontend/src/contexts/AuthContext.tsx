@@ -11,6 +11,7 @@ interface AuthCtx {
     login: (email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
     loading: boolean;
+    register: (email: string, password: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthCtx>({
@@ -18,7 +19,8 @@ const AuthContext = createContext<AuthCtx>({
     token: null,
     login: async () => {},
     logout: async () => {},
-    loading: true
+    loading: true,
+    register: async () => {}
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -61,6 +63,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    const register = async (email: string, password: string) => {
+        try {
+            const { data } = await api.post('/api/auth/register', { email, password });
+            
+            // Store tokens
+            localStorage.setItem('accessToken', data.accessToken);
+            localStorage.setItem('refreshToken', data.refreshToken);
+            
+            // Extract user info from token
+            const payload = JSON.parse(atob(data.accessToken.split('.')[1]));
+            const userData = { id: payload.id, email: payload.email };
+            
+            setToken(data.accessToken);
+            setUser(userData);
+            localStorage.setItem('user', JSON.stringify(userData));
+        } catch (error) {
+            throw error;
+        }
+    };
+
     const logout = async () => {
         try {
             const refreshToken = localStorage.getItem('refreshToken');
@@ -79,7 +101,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+        <AuthContext.Provider value={{ user, token, login, logout, loading, register }}>
             {children}
         </AuthContext.Provider>
     );
