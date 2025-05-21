@@ -17,17 +17,18 @@ interface ApiError {
     details?: string;
 }
 
-interface ApiResponse<T> {
-    data: T;
-    error?: ApiError;
-}
-
 interface RefreshTokenResponse {
     accessToken: string;
 }
 
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
     _retry?: boolean;
+}
+
+interface RetryError {
+    status?: number;
+    message?: string;
+    data?: unknown;
 }
 
 let isRefreshing = false;
@@ -133,24 +134,26 @@ api.interceptors.response.use(
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 
-const withRetry = async (fn: () => Promise<any>, retries = MAX_RETRIES): Promise<any> => {
-  try {
-    return await fn();
-  } catch (error: any) {
-    if (retries > 0 && error.status !== 401 && error.status !== 403) {
-      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-      return withRetry(fn, retries - 1);
+const withRetry = async <T>(fn: () => Promise<AxiosResponse<T>>, retries = MAX_RETRIES): Promise<T> => {
+    try {
+        const response = await fn();
+        return response.data;
+    } catch (error) {
+        const retryError = error as RetryError;
+        if (retries > 0 && retryError.status !== 401 && retryError.status !== 403) {
+            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+            return withRetry(fn, retries - 1);
+        }
+        throw error;
     }
-    throw error;
-  }
 };
 
 // Enhanced API methods with retry logic
 export const enhancedApi = {
-  get: (url: string, config = {}) => withRetry(() => api.get(url, config)),
-  post: (url: string, data = {}, config = {}) => withRetry(() => api.post(url, data, config)),
-  put: (url: string, data = {}, config = {}) => withRetry(() => api.put(url, data, config)),
-  delete: (url: string, config = {}) => withRetry(() => api.delete(url, config)),
+    get: <T>(url: string, config = {}) => withRetry<T>(() => api.get<T>(url, config)),
+    post: <T>(url: string, data = {}, config = {}) => withRetry<T>(() => api.post<T>(url, data, config)),
+    put: <T>(url: string, data = {}, config = {}) => withRetry<T>(() => api.put<T>(url, data, config)),
+    delete: <T>(url: string, config = {}) => withRetry<T>(() => api.delete<T>(url, config)),
 };
 
 export default enhancedApi;
