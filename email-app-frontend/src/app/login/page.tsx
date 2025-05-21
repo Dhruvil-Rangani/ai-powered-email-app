@@ -77,7 +77,7 @@ export default function Login() {
         </motion.button>
 
         <p className="text-center text-sm text-slate-400">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/register" className="text-indigo-400 hover:underline">
             Register
           </Link>

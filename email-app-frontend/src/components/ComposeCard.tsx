@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, useDragControls, PanInfo } from 'framer-motion';
+import { motion, useDragControls } from 'framer-motion';
 import { XMarkIcon, MinusIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline';
 import { useForm } from 'react-hook-form';
 import api from '@/lib/api';
@@ -40,7 +40,7 @@ export default function ComposeCard({ windowId, afterSend }: Props) {
 
     if (!window) return null;
 
-    const handleDragStart = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const handleDragStart = (event: MouseEvent | TouchEvent | PointerEvent) => {
         // Always allow dragging from the header
         if (event.target instanceof HTMLElement && event.target.closest('.window-header')) {
             if (event instanceof PointerEvent) {
