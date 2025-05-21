@@ -156,9 +156,18 @@ const removeTag = async (req, res) => {
   const userId = req.user.id;
 
   try {
+    // Parse tagId to integer
+    const tagIdInt = parseInt(tagId, 10);
+    if (isNaN(tagIdInt)) {
+      return res.status(400).json({ 
+        error: 'Invalid tag ID', 
+        details: 'Tag ID must be a number' 
+      });
+    }
+
     await prisma.tag.delete({
       where: {
-        id: tagId,
+        id: tagIdInt,  // Use the parsed integer
         userId,
         messageId,
       },
