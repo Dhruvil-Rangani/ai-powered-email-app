@@ -148,6 +148,26 @@ const getEmailsByTag = async (req, res) => {
   }
 };
 
+// Remove Tag from Email
+const removeTag = async (req, res) => {
+  const { messageId, tagId } = req.params;
+  const userId = req.user.id;
+
+  try {
+    await prisma.tag.delete({
+      where: {
+        id: tagId,
+        userId,
+        messageId,
+      },
+    });
+    res.sendStatus(204);
+  } catch (err) {
+    console.error('Failed to remove tag:', err);
+    res.status(500).json({ error: 'Failed to remove tag', details: err.message });
+  }
+};
+
 module.exports = {
   sendEmail,
   getInboxEmails,
@@ -155,4 +175,5 @@ module.exports = {
   tagEmail,
   getEmailTags,
   getEmailsByTag,
+  removeTag,
 };

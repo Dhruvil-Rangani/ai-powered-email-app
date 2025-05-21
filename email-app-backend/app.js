@@ -3,7 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const http    = require('http');
 const { Server } = require('socket.io');
-const emailRoutes = require('./routes/emails');
+const emailRoutes = require('./routes/email');
 const aiRoutes = require('./routes/ai');
 const authRoutes = require('./routes/auth');
 const { authenticate } = require('./middleware/auth');
@@ -43,8 +43,8 @@ io.on('connection', async (socket) => {
 });
 
 app.use('/api/auth', authRoutes);
-app.use('/api/emails', authenticate, emailRoutes);
-app.use('/api/ai', authenticate, aiRoutes);
+app.use('/api/email', emailRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.get('/test', (req, res) => res.send('✅ Backend is live!'));
 

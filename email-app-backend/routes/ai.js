@@ -1,6 +1,9 @@
-const router = require('express').Router();
+const express = require('express');
+const router = express.Router();
 const { chat, history } = require('../controllers/chatController');
 const rateLimit = require('express-rate-limit');
+const { aiSearch } = require('../controllers/aiController');
+const { authenticateToken } = require('../middleware/auth');
 
 
 const aiLimiter = rateLimit({
@@ -12,5 +15,8 @@ const aiLimiter = rateLimit({
 
 router.post('/chat', aiLimiter, chat);
 router.get('/history', history);
+
+// AI search endpoint
+router.post('/search', authenticateToken, aiSearch);
 
 module.exports = router;
