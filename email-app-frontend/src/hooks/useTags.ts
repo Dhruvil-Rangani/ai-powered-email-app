@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import api from '@/lib/api';
+import { enhancedApi } from '@/lib/api';
+import { AxiosError } from 'axios';
 
 export interface Tag {
   id: string;
@@ -9,7 +10,7 @@ export interface Tag {
 }
 
 interface ApiError {
-  message: string;
+  error: string;
   details?: string;
 }
 
@@ -32,11 +33,12 @@ export function useTags(): UseTagsReturn {
     setIsLoading(true);
     setError(null);
     try {
-      const { data } = await api.post('/api/email/tags', { messageId, label });
+      const { data } = await enhancedApi.post('/api/email/tags', { messageId, label });
       setTags(prev => [...prev, data]);
       return data;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || err.message || 'Failed to add tag';
+    } catch (err) {
+      const error = err as AxiosError<ApiError>;
+      const errorMessage = error.response?.data?.error ?? 'Failed to add tag';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -48,8 +50,7 @@ export function useTags(): UseTagsReturn {
     setIsLoading(true);
     setError(null);
     try {
-      // First get the tag ID for the label
-      const { data: tags } = await api.get(`/api/email/tags/${messageId}`);
+      const { data: tags } = await enhancedApi.get(`/api/email/tags/${encodeURIComponent(messageId)}`);
       const tagToRemove = tags.find((t: Tag) => t.label === label);
       
       if (!tagToRemove) {
@@ -58,27 +59,13 @@ export function useTags(): UseTagsReturn {
         throw new Error(errorMessage);
       }
 
-      // Then delete using the tag ID (which is a number)
-      try {
-        await api.delete(`/api/email/tags/${messageId}/${tagToRemove.id}`);
-        // Update local state only after successful deletion
-        setTags(prev => prev.filter(tag => tag.id !== tagToRemove.id));
-      } catch (deleteErr: any) {
-        console.error('Delete tag error:', deleteErr.response?.data || deleteErr);
-        const errorMessage = deleteErr.response?.data?.error || deleteErr.message || 'Failed to delete tag';
-        setError(errorMessage);
-        throw new Error(errorMessage);
-      }
-    } catch (err: any) {
-      // If it's not already an Error object, create one
-      if (!(err instanceof Error)) {
-        console.error('Remove tag error:', err.response?.data || err);
-        const errorMessage = err.response?.data?.error || err.message || 'Failed to remove tag';
-        setError(errorMessage);
-        throw new Error(errorMessage);
-      }
-      // If it's already an Error, just rethrow it
-      throw err;
+      await enhancedApi.delete(`/api/email/tags/${encodeURIComponent(messageId)}/${tagToRemove.id}`);
+      setTags(prev => prev.filter(tag => tag.id !== tagToRemove.id));
+    } catch (err) {
+      const error = err as AxiosError<ApiError>;
+      const errorMessage = error.response?.data?.error ?? 'Failed to remove tag';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -88,15 +75,15 @@ export function useTags(): UseTagsReturn {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.get(`/api/email/${messageId}/tags`);
-      const data = response.data as { tags: Tag[] };
-      setTags(data.tags);
-      return data.tags;
+      const { data } = await enhancedApi.get(`/api/email/tags/${encodeURIComponent(messageId)}`);
+      setTags(data);
+      return data;
     } catch (err) {
-      const error = err as { response?: { data?: ApiError } };
-      setError(error.response?.data?.message ?? 'Failed to fetch tags');
+      const error = err as AxiosError<ApiError>;
+      const errorMessage = error.response?.data?.error ?? 'Failed to fetch tags';
+      setError(errorMessage);
       console.error('Failed to fetch tags:', error);
-      throw new Error(error.response?.data?.message ?? 'Failed to fetch tags');
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -106,11 +93,11 @@ export function useTags(): UseTagsReturn {
     setIsLoading(true);
     setError(null);
     try {
-      const { data } = await api.get(`/api/email/tags/by/${encodeURIComponent(label)}`);
+      const { data } = await enhancedApi.get(`/api/email/tags/by/${encodeURIComponent(label)}`);
       return data.messageIds;
-    } catch (err: any) {
-      console.error('Get emails by tag error:', err.response?.data || err);
-      const errorMessage = err.response?.data?.error || err.message || 'Failed to fetch emails by tag';
+    } catch (err) {
+      const error = err as AxiosError<ApiError>;
+      const errorMessage = error.response?.data?.error ?? 'Failed to fetch emails by tag';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {

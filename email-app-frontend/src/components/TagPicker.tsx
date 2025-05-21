@@ -5,14 +5,12 @@ import { PlusIcon, XMarkIcon, TagIcon } from '@heroicons/react/24/outline';
 import TagChip from './TagChip';
 
 interface TagPickerProps {
-    messageId: string;
     existingTags: string[];
     onAddTag: (label: string) => void;
     className?: string;
 }
 
 export default function TagPicker({
-    messageId,
     existingTags,
     onAddTag,
     className = '',

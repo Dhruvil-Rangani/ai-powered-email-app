@@ -13,7 +13,7 @@ import {
 import { formatRelativeTime, getFileIcon, formatEmailAddress, extractEmailAddress, formatFileSize } from '@/utils/format';
 import EmailHTMLContent from './EmailHTMLContent';
 import md5 from 'crypto-js/md5';
-import { useTags, Tag } from '@/hooks/useTags';
+import { useTags } from '@/hooks/useTags';
 import TagChip from './TagChip';
 import TagPicker from './TagPicker';
 
@@ -131,9 +131,8 @@ export default function EmailMessage({ message, onReply, onDownload, isLastInThr
             </span>
           )}
           <TagPicker
-            messageId={message.messageId}
             existingTags={tags.map(t => t.label)}
-            onAddTag={(label: string) => addTag(message.messageId, label)}
+            onAddTag={(label) => addTag(message.messageId, label)}
             className="mr-2"
           />
           <button
