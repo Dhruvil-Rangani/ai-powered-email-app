@@ -6,17 +6,25 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
-type LoginForm = { email: string; password: string };
+type LoginForm = { 
+  email: string; 
+  password: string;
+  rememberMe: boolean;
+};
 
 export default function Login() {
-  const { register: reg, handleSubmit } = useForm<LoginForm>();
+  const { register: reg, handleSubmit } = useForm<LoginForm>({
+    defaultValues: {
+      rememberMe: true
+    }
+  });
   const auth = useAuth();
   const router = useRouter();
   
   
   async function onSubmit(v: LoginForm) {
     try {
-      await auth.login(v.email, v.password);
+      await auth.login(v.email, v.password, v.rememberMe);
       router.push('/inbox');
     } catch {
       alert('Login failed');
@@ -48,16 +56,28 @@ export default function Login() {
           className="input input-bordered w-full bg-slate-800"
         />
 
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="rememberMe"
+            {...reg('rememberMe')}
+            className="h-4 w-4 rounded border-slate-700 bg-slate-800 text-indigo-500 focus:ring-indigo-500"
+          />
+          <label htmlFor="rememberMe" className="ml-2 text-sm text-slate-300">
+            Remember me
+          </label>
+        </div>
+
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           className="btn btn-primary w-full cursor-pointer"
         >
-          Sign in
+          Sign in
         </motion.button>
 
         <p className="text-center text-sm text-slate-400">
-          Don’t have an account?{' '}
+          Don't have an account?{' '}
           <Link href="/register" className="text-indigo-400 hover:underline">
             Register
           </Link>

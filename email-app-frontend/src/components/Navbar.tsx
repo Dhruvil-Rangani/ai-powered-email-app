@@ -24,9 +24,9 @@ export default function Navbar() {
       </Link>
 
       <div className="hidden gap-6 md:flex">
-        <Link href="#features" className="hover:text-indigo-300">Features</Link>
-        <Link href="#how" className="hover:text-indigo-300">How It Works</Link>
-        <Link href="#pricing" className="hover:text-indigo-300">Pricing</Link>
+        <Link href="/#features" className="hover:text-indigo-300">Features</Link>
+        <Link href="/#how" className="hover:text-indigo-300">How It Works</Link>
+        <Link href="/#pricing" className="hover:text-indigo-300">Pricing</Link>
       </div>
 
       {isLoginPage ? (

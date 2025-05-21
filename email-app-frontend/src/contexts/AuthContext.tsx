@@ -8,7 +8,7 @@ type TokenPayload = JwtPayload & { id: string; email: string };
 
 export interface AuthCtx {
   user: User | null;
-  login: (e: string, p: string) => Promise<void>;
+  login: (e: string, p: string, rememberMe?: boolean) => Promise<void>;
   register: (e: string, p: string) => Promise<void>;
   logout: () => void;
   initialized: boolean;
@@ -54,21 +54,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Memoize logout so it's stable across renders
   const logout = useCallback(() => {
-    const refresh = localStorage.getItem(REFRESH);
+    const refresh = localStorage.getItem(REFRESH) || sessionStorage.getItem(REFRESH);
     if (refresh) api.post('/api/auth/logout', { refreshToken: refresh }).catch(() => {});
     localStorage.clear();
+    sessionStorage.clear();
     setAuthHeader(null);
     setUser(null);
     setInitialized(true);
   }, []);
 
-
-
   /** Load persisted tokens on mount */
-   useEffect(() => {
+  useEffect(() => {
     async function initAuth() {
-      const access  = localStorage.getItem(ACCESS);
-      const refresh = localStorage.getItem(REFRESH);
+      const access = localStorage.getItem(ACCESS) || sessionStorage.getItem(ACCESS);
+      const refresh = localStorage.getItem(REFRESH) || sessionStorage.getItem(REFRESH);
 
       if (access && !isExpired(access)) {
         setUser(decode(access));
@@ -86,7 +85,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth();
   }, [logout]);
 
-
   /** register -> auto‑login */
   interface AuthResponse { accessToken: string, refreshToken: string }
   const register = async (email: string, password: string) => {
@@ -95,16 +93,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   /** login flow */
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, rememberMe = true) => {
     const { data } = await api.post<AuthResponse>('/api/auth/login', { email, password });
-    localStorage.setItem(ACCESS, data.accessToken);
-    localStorage.setItem(REFRESH, data.refreshToken);
+    const storage = rememberMe ? localStorage : sessionStorage;
+    storage.setItem(ACCESS, data.accessToken);
+    storage.setItem(REFRESH, data.refreshToken);
     setAuthHeader(data.accessToken);
     setUser({ id: decode(data.accessToken).id, email });
     setInitialized(true);
   };
 
-  
   /** Axios response interceptor → auto‑refresh on 401 */
   useEffect(() => {
     if (!initialized) return;
@@ -112,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       (r) => r,
       async (err) => {
         if (err.response?.status === 401) {
-          const refresh = localStorage.getItem(REFRESH);
+          const refresh = localStorage.getItem(REFRESH) || sessionStorage.getItem(REFRESH);
           if (refresh) {
             try {
               const newUser = await refreshAccess(refresh);
