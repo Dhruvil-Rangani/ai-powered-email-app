@@ -142,9 +142,10 @@ const getEmailTags = async (req, res) => {
 // Get All Emails Tagged with a Label
 const getEmailsByTag = async (req, res) => {
   try {
-    const tags = await filterEmailsByTag(req.params.userId, req.params.label);
+    const tags = await filterEmailsByTag(req.user.id, req.params.label);
     res.json(tags);
   } catch (err) {
+    console.error('Failed to fetch tagged emails:', err);
     res.status(500).json({ error: 'Failed to fetch tagged emails', details: err.message });
   }
 };
