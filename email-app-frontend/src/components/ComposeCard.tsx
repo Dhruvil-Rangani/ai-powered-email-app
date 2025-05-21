@@ -1,11 +1,9 @@
 'use client'
 
 import { motion, useDragControls } from 'framer-motion';
-import { XMarkIcon, MinusIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline';
 import { useForm } from 'react-hook-form';
 import api from '@/lib/api';
 import { useState, useRef, useEffect } from 'react';
-import { AxiosError } from 'axios';
 import { useCompose } from '@/contexts/ComposeContext';
 import { AnimatePresence } from 'framer-motion';
 
@@ -21,9 +19,6 @@ interface ComposeForm {
     attachments: FileList | null;
 }
 
-const MAX_WIDTH = 800;
-const MAX_HEIGHT = 800;
-
 export default function ComposeCard({ windowId, afterSend }: Props) {
     const {
         register,
@@ -35,7 +30,7 @@ export default function ComposeCard({ windowId, afterSend }: Props) {
     const { removeWindow, updateWindow, bringToFront, windows } = useCompose();
     const windowRef = useRef<HTMLDivElement>(null);
     const dragControls = useDragControls();
-    const [isFormFocused, setIsFormFocused] = useState(false);
+    const [_isFormFocused, setIsFormFocused] = useState(false);
     const [mounted, setMounted] = useState(false);
     const window = windows.find((w) => w.id === windowId);
 
