@@ -30,7 +30,6 @@ export default function ComposeCard({ windowId, afterSend }: Props) {
     const { removeWindow, updateWindow, bringToFront, windows } = useCompose();
     const windowRef = useRef<HTMLDivElement>(null);
     const dragControls = useDragControls();
-    const [_isFormFocused, setIsFormFocused] = useState(false);
     const [mounted, setMounted] = useState(false);
     const window = windows.find((w) => w.id === windowId);
 
@@ -129,8 +128,6 @@ export default function ComposeCard({ windowId, afterSend }: Props) {
                                     placeholder="To"
                                     {...register('to', { required: true })}
                                     className="w-full rounded border border-slate-700 bg-slate-800 p-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                    onFocus={() => setIsFormFocused(true)}
-                                    onBlur={() => setIsFormFocused(false)}
                                     autoComplete="email"
                                 />
                                 <input
@@ -138,15 +135,13 @@ export default function ComposeCard({ windowId, afterSend }: Props) {
                                     placeholder="Subject"
                                     {...register('subject')}
                                     className="w-full rounded border border-slate-700 bg-slate-800 p-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                    onFocus={() => setIsFormFocused(true)}
-                                    onBlur={() => setIsFormFocused(false)}
+                                    autoComplete="off"
                                 />
                                 <textarea
                                     placeholder="Write your message..."
                                     {...register('body', { required: true })}
                                     className="h-64 w-full rounded border border-slate-700 bg-slate-800 p-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                    onFocus={() => setIsFormFocused(true)}
-                                    onBlur={() => setIsFormFocused(false)}
+                                    autoComplete="off"
                                 />
                             </div>
 
