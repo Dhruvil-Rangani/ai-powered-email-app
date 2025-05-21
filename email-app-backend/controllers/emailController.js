@@ -131,9 +131,10 @@ const tagEmail = async (req, res) => {
 // Get Tags for One Email
 const getEmailTags = async (req, res) => {
   try {
-    const tags = await getTags(req.params.userId, req.params.messageId);
+    const tags = await getTags(req.user.id, req.params.messageId);
     res.json(tags);
   } catch (err) {
+    console.error('Failed to get tags:', err);
     res.status(500).json({ error: 'Failed to get tags', details: err.message });
   }
 };
