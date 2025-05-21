@@ -2,9 +2,7 @@
 import { Inter } from 'next/font/google';
 import type { ReactNode } from 'react';
 import Providers from './providers';
-import Navbar from '@/components/Navbar';
 import '../styles/globals.css';
-import { headers } from 'next/headers';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -16,16 +14,11 @@ export const metadata = {
   }
 };
 
-export default async function RootLayout({ children }: { children: ReactNode }) {
-  const headersList = await headers();
-  const pathname = headersList.get('x-pathname') || '';
-  const showNavbar = !pathname.startsWith('/inbox');
-
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="dark">
       <body className={`${inter.className} bg-slate-950 text-slate-100 antialiased`}>
         <Providers>
-          {showNavbar && <Navbar />}
           {children}
         </Providers>
       </body>

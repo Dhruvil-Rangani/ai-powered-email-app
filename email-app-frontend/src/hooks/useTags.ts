@@ -33,7 +33,7 @@ export function useTags(): UseTagsReturn {
     setIsLoading(true);
     setError(null);
     try {
-      const { data } = await enhancedApi.post('/api/email/tags', { messageId, label });
+      const data = await enhancedApi.post<Tag>('/api/email/tags', { messageId, label });
       setTags(prev => [...prev, data]);
       return data;
     } catch (err) {
@@ -50,7 +50,7 @@ export function useTags(): UseTagsReturn {
     setIsLoading(true);
     setError(null);
     try {
-      const { data: tags } = await enhancedApi.get(`/api/email/tags/${encodeURIComponent(messageId)}`);
+      const tags = await enhancedApi.get<Tag[]>(`/api/email/tags/${encodeURIComponent(messageId)}`);
       const tagToRemove = tags.find((t: Tag) => t.label === label);
       
       if (!tagToRemove) {
@@ -75,7 +75,7 @@ export function useTags(): UseTagsReturn {
     setIsLoading(true);
     setError(null);
     try {
-      const { data } = await enhancedApi.get(`/api/email/tags/${encodeURIComponent(messageId)}`);
+      const data = await enhancedApi.get<Tag[]>(`/api/email/tags/${encodeURIComponent(messageId)}`);
       setTags(data);
       return data;
     } catch (err) {
@@ -93,7 +93,7 @@ export function useTags(): UseTagsReturn {
     setIsLoading(true);
     setError(null);
     try {
-      const { data } = await enhancedApi.get(`/api/email/tags/by/${encodeURIComponent(label)}`);
+      const data = await enhancedApi.get<{ messageIds: string[] }>(`/api/email/tags/by/${encodeURIComponent(label)}`);
       return data.messageIds;
     } catch (err) {
       const error = err as AxiosError<ApiError>;

@@ -4,7 +4,7 @@ import { motion, useDragControls } from 'framer-motion';
 import { XMarkIcon, MinusIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline';
 import { useForm } from 'react-hook-form';
 import api from '@/lib/api';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { AxiosError } from 'axios';
 import { useCompose } from '@/contexts/ComposeContext';
 import { AnimatePresence } from 'framer-motion';
@@ -36,12 +36,16 @@ export default function ComposeCard({ windowId, afterSend }: Props) {
     const windowRef = useRef<HTMLDivElement>(null);
     const dragControls = useDragControls();
     const [isFormFocused, setIsFormFocused] = useState(false);
+    const [mounted, setMounted] = useState(false);
     const window = windows.find((w) => w.id === windowId);
 
-    if (!window) return null;
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!window || !mounted) return null;
 
     const handleDragStart = (event: MouseEvent | TouchEvent | PointerEvent) => {
-        // Always allow dragging from the header
         if (event.target instanceof HTMLElement && event.target.closest('.window-header')) {
             if (event instanceof PointerEvent) {
                 dragControls.start(event);
@@ -64,94 +68,54 @@ export default function ComposeCard({ windowId, afterSend }: Props) {
 
     const onSubmit = async (data: ComposeForm) => {
         try {
-            const formData = new FormData();
-            formData.append('to', data.to);
-            formData.append('subject', data.subject);
-            formData.append('body', data.body);
-            if (data.attachments) {
-                Array.from(data.attachments).forEach((file) => formData.append('attachments', file));
-            }
-
-            await api.post('/api/email/send', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
-
+            setError(null);
+            await api.post('/api/email/send', data);
             reset();
-            afterSend?.();
-            handleClose();
+            if (afterSend) afterSend();
+            removeWindow(windowId);
         } catch (err) {
-            const error = err as AxiosError<{ message: string }>;
-            setError(error.response?.data?.message ?? 'Failed to send email');
+            setError(err instanceof Error ? err.message : 'Failed to send email');
         }
     };
 
     return (
         <motion.div
             ref={windowRef}
-            drag={!isFormFocused}
+            drag
             dragControls={dragControls}
             dragMomentum={false}
             dragElastic={0}
             onDragStart={handleDragStart}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{
-                opacity: 1,
-                scale: 1,
-                x: window.position.x,
-                y: window.position.y,
-                width: window.isMaximized ? MAX_WIDTH : '400px',
-                height: window.isMaximized ? MAX_HEIGHT : window.isMinimized ? 'auto' : '500px',
-            }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className={`fixed z-50 overflow-hidden rounded-lg bg-slate-900 shadow-xl ${
+                window.isMaximized ? 'inset-4' : 'w-[600px]'
+            }`}
             style={{
-                position: 'fixed',
-                zIndex: window.zIndex,
-                top: window.isMaximized ? '50%' : undefined,
-                left: window.isMaximized ? '50%' : undefined,
-                transform: window.isMaximized ? 'translate(-50%, -50%)' : undefined,
+                top: window.position.y,
+                left: window.position.x,
             }}
-            className="rounded-lg bg-slate-900 shadow-xl ring-1 ring-slate-700"
         >
-            {/* Window Header */}
-            <div
-                onPointerDown={(e) => {
-                    const target = e.target as HTMLElement;
-                    if (target === e.currentTarget || target.closest('.window-header')) {
-                        dragControls.start(e);
-                        bringToFront(windowId);
-                    }
-                }}
-                className="window-header flex cursor-move items-center justify-between border-b border-slate-700 bg-slate-800 px-4 py-2"
-            >
-                <h2 className="text-sm font-medium text-slate-300">New Message</h2>
-                <div className="flex items-center gap-1">
+            <div className="window-header flex items-center justify-between bg-slate-800 px-4 py-2">
+                <div className="flex items-center space-x-2">
                     <button
                         onClick={handleMinimize}
-                        className="rounded p-1 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors cursor-pointer"
-                    >
-                        <MinusIcon className="h-4 w-4" />
-                    </button>
+                        className="h-3 w-3 rounded-full bg-yellow-500 hover:bg-yellow-400"
+                    />
                     <button
                         onClick={handleMaximize}
-                        className="rounded p-1 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors cursor-pointer"
-                    >
-                        {window.isMaximized ? (
-                            <ArrowsPointingInIcon className="h-4 w-4" />
-                        ) : (
-                            <ArrowsPointingOutIcon className="h-4 w-4" />
-                        )}
-                    </button>
+                        className="h-3 w-3 rounded-full bg-green-500 hover:bg-green-400"
+                    />
                     <button
                         onClick={handleClose}
-                        className="rounded p-1 text-slate-400 hover:bg-red-500 hover:text-white transition-colors cursor-pointer"
-                    >
-                        <XMarkIcon className="h-4 w-4" />
-                    </button>
+                        className="h-3 w-3 rounded-full bg-red-500 hover:bg-red-400"
+                    />
                 </div>
+                <div className="text-sm font-medium text-slate-300">New Message</div>
+                <div className="w-20" /> {/* Spacer for alignment */}
             </div>
 
-            {/* Window Content */}
             <AnimatePresence>
                 {!window.isMinimized && (
                     <motion.div
@@ -172,6 +136,7 @@ export default function ComposeCard({ windowId, afterSend }: Props) {
                                     className="w-full rounded border border-slate-700 bg-slate-800 p-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                     onFocus={() => setIsFormFocused(true)}
                                     onBlur={() => setIsFormFocused(false)}
+                                    autoComplete="email"
                                 />
                                 <input
                                     type="text"
@@ -182,35 +147,19 @@ export default function ComposeCard({ windowId, afterSend }: Props) {
                                     onBlur={() => setIsFormFocused(false)}
                                 />
                                 <textarea
-                                    rows={6}
                                     placeholder="Write your message..."
-                                    {...register('body')}
-                                    className="w-full resize-none rounded border border-slate-700 bg-slate-800 p-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                    onFocus={() => setIsFormFocused(true)}
-                                    onBlur={() => setIsFormFocused(false)}
-                                />
-                                <input
-                                    type="file"
-                                    multiple
-                                    {...register('attachments')}
-                                    className="w-full text-sm text-slate-400 file:mr-2 file:rounded file:border-none file:bg-indigo-600 file:px-3 file:py-1 file:text-sm file:text-white file:hover:bg-indigo-500 cursor-pointer"
+                                    {...register('body', { required: true })}
+                                    className="h-64 w-full rounded border border-slate-700 bg-slate-800 p-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                     onFocus={() => setIsFormFocused(true)}
                                     onBlur={() => setIsFormFocused(false)}
                                 />
                             </div>
 
-                            <div className="mt-4 flex items-center justify-between border-t border-slate-700 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={handleClose}
-                                    className="rounded px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-700 cursor-pointer"
-                                >
-                                    Discard
-                                </button>
+                            <div className="mt-4 flex justify-end">
                                 <button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="rounded bg-indigo-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                    className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
                                 >
                                     {isSubmitting ? 'Sending...' : 'Send'}
                                 </button>

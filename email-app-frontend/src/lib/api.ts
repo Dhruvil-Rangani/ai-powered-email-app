@@ -134,10 +134,9 @@ api.interceptors.response.use(
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 
-const withRetry = async <T>(fn: () => Promise<AxiosResponse<T>>, retries = MAX_RETRIES): Promise<T> => {
+const withRetry = async <T>(fn: () => Promise<AxiosResponse<T>>, retries = MAX_RETRIES): Promise<AxiosResponse<T>> => {
     try {
-        const response = await fn();
-        return response.data;
+        return await fn();
     } catch (error) {
         const retryError = error as RetryError;
         if (retries > 0 && retryError.status !== 401 && retryError.status !== 403) {
@@ -148,12 +147,25 @@ const withRetry = async <T>(fn: () => Promise<AxiosResponse<T>>, retries = MAX_R
     }
 };
 
-// Enhanced API methods with retry logic
+// Enhanced API methods with retry logic and proper typing
 export const enhancedApi = {
-    get: <T>(url: string, config = {}) => withRetry<T>(() => api.get<T>(url, config)),
-    post: <T>(url: string, data = {}, config = {}) => withRetry<T>(() => api.post<T>(url, data, config)),
-    put: <T>(url: string, data = {}, config = {}) => withRetry<T>(() => api.put<T>(url, data, config)),
-    delete: <T>(url: string, config = {}) => withRetry<T>(() => api.delete<T>(url, config)),
+    get: async <T>(url: string, config = {}) => {
+        const response = await withRetry(() => api.get<T>(url, config));
+        return response.data;
+    },
+    post: async <T>(url: string, data = {}, config = {}) => {
+        const response = await withRetry(() => api.post<T>(url, data, config));
+        return response.data;
+    },
+    put: async <T>(url: string, data = {}, config = {}) => {
+        const response = await withRetry(() => api.put<T>(url, data, config));
+        return response.data;
+    },
+    delete: async <T>(url: string, data = {}, config = {}) => {
+        const response = await withRetry(() => api.delete<T>(url, { data, ...config }));
+        return response.data;
+    },
 };
 
-export default enhancedApi;
+// Export the raw axios instance for cases where we need the full response
+export default api;

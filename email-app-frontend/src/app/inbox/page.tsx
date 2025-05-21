@@ -15,7 +15,7 @@ import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import EmailMessage from '@/components/EmailMessage';
 import { ComposeProvider } from '@/contexts/ComposeContext';
-import { ThreadMsg } from '@/types/email';
+import { ThreadMsg, ThreadsResponse } from '@/types/email';
 
 const ComposeCard = dynamic(() => import('@/components/ComposeCard'), { ssr: false });
 
@@ -32,11 +32,11 @@ function InboxContent() {
 
   async function handleDownload(messageId: string, filename: string) {
     try {
-      const { data } = await api.get(
+      const response = await api.get<Blob>(
         `/api/email/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(filename)}`,
         { responseType: 'blob' }
       );
-      const blob = new Blob([data]);
+      const blob = new Blob([response.data]);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -60,8 +60,8 @@ function InboxContent() {
         references: [message.messageId, ...(message.references || [])],
       });
       // Refresh the thread
-      const { data } = await api.get('/api/email/threads', { params: { limit: 20 } });
-      setThreads(data.threads);
+      const response = await api.get<ThreadsResponse>('/api/email/threads', { params: { limit: 20 } });
+      setThreads(response.data.threads);
     } catch (error) {
       console.error('Failed to send reply:', error);
       throw error;
@@ -78,8 +78,8 @@ function InboxContent() {
     if (!authLoading) {
       setLoading(true);
       api
-        .get('/api/email/threads', { params: { limit: 20 } })
-        .then(({ data }) => setThreads(data.threads))
+        .get<ThreadsResponse>('/api/email/threads', { params: { limit: 20 } })
+        .then((response) => setThreads(response.data.threads))
         .finally(() => setLoading(false));
 
       if (!socketRef.current) {
@@ -126,7 +126,6 @@ function InboxContent() {
     if (canAddWindow) {
       addWindow();
     } else {
-      // You could show a toast notification here
       alert('Maximum number of compose windows reached (5)');
     }
   };
@@ -236,9 +235,10 @@ function InboxContent() {
           <ComposeCard
             key={window.id}
             windowId={window.id}
-            afterSend={() =>
-              api.get('/api/email/threads', { params: { limit: 20 } }).then(({ data }) => setThreads(data.threads))
-            }
+            afterSend={async () => {
+              const response = await api.get<ThreadsResponse>('/api/email/threads', { params: { limit: 20 } });
+              setThreads(response.data.threads);
+            }}
           />
         ))}
       </AnimatePresence>

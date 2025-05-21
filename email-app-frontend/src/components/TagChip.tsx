@@ -62,7 +62,7 @@ export default function TagChip({
                         e.stopPropagation();
                         onRemove();
                     }}
-                    className="ml-1 rounded-full p-0.5 hover:bg-white/10"
+                    className="ml-1 rounded-full p-0.5 hover:bg-white/10 cursor-pointer"
                     title="Remove tag"
                 >
                     <XMarkIcon className="h-3 w-3" />

@@ -31,7 +31,7 @@ export default function Navbar() {
     if (isHovered) setIsExpanded(true);
   }, [isHovered]);
 
-  // Don't render navbar in inbox
+  // (Early return is now after all hooks.)
   if (isInboxPage) return null;
 
   return (
