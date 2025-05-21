@@ -1,5 +1,4 @@
 const { OpenAI } = require('openai');
-const { SearchFilters } = require('../models/email');
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY

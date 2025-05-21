@@ -34,7 +34,7 @@ interface ThreadMsg {
 
 function InboxContent() {
   const [loading, setLoading] = useState(true);
-  const { user, logout, initialized } = useAuth();
+  const { user, logout, loading: authLoading } = useAuth();
   const { addWindow, windows, canAddWindow } = useCompose();
   const router = useRouter();
   const [threads, setThreads] = useState<ThreadMsg[][]>([]);
@@ -46,7 +46,7 @@ function InboxContent() {
   async function handleDownload(messageId: string, filename: string) {
     try {
       const { data } = await api.get(
-        `/api/emails/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(filename)}`,
+        `/api/email/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(filename)}`,
         { responseType: 'blob' }
       );
       const blob = new Blob([data]);
@@ -65,7 +65,7 @@ function InboxContent() {
 
   async function handleReply(message: ThreadMsg, content: string) {
     try {
-      await api.post('/api/emails/send', {
+      await api.post('/api/email/send', {
         to: message.from,
         subject: `Re: ${message.subject}`,
         body: content,
@@ -73,7 +73,7 @@ function InboxContent() {
         references: [message.messageId, ...(message.references || [])],
       });
       // Refresh the thread
-      const { data } = await api.get('/api/emails/inbox', { params: { limit: 20 } });
+      const { data } = await api.get('/api/email/threads', { params: { limit: 20 } });
       setThreads(data.threads);
     } catch (error) {
       console.error('Failed to send reply:', error);
@@ -82,36 +82,41 @@ function InboxContent() {
   }
 
   useEffect(() => {
-    if (!initialized) return;
-    if (!user) return router.push('/login');
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [authLoading, user, router]);
 
-    setLoading(true);
-    api
-      .get('/api/emails/inbox', { params: { limit: 20 } })
-      .then(({ data }) => setThreads(data.threads))
-      .finally(() => setLoading(false));
+  useEffect(() => {
+    if (!authLoading) {
+      setLoading(true);
+      api
+        .get('/api/email/threads', { params: { limit: 20 } })
+        .then(({ data }) => setThreads(data.threads))
+        .finally(() => setLoading(false));
 
-    if (!socketRef.current) {
-      socketRef.current = io(process.env.NEXT_PUBLIC_API_URL as string, {
-        auth: { token: localStorage.getItem('accessToken') },
-      });
-
-      socketRef.current.on('new_email', (email: ThreadMsg) => {
-        setThreads((prev) => {
-          if (prev.some((t) => t[0].messageId === email.messageId)) return prev;
-          setHighlightId(email.messageId);
-          setTimeout(() => setHighlightId(null), 5000);
-          listRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-          return [[email], ...prev];
+      if (!socketRef.current) {
+        socketRef.current = io(process.env.NEXT_PUBLIC_API_URL as string, {
+          auth: { token: localStorage.getItem('accessToken') },
         });
-      });
+
+        socketRef.current.on('new_email', (email: ThreadMsg) => {
+          setThreads((prev) => {
+            if (prev.some((t) => t[0].messageId === email.messageId)) return prev;
+            setHighlightId(email.messageId);
+            setTimeout(() => setHighlightId(null), 5000);
+            listRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+            return [[email], ...prev];
+          });
+        });
+      }
     }
 
     return () => {
       socketRef.current?.disconnect();
       socketRef.current = null;
     };
-  }, [initialized, user, router]);
+  }, [authLoading, user, router]);
 
   const handleCompose = () => {
     if (canAddWindow) {
@@ -121,6 +126,10 @@ function InboxContent() {
       alert('Maximum number of compose windows reached (5)');
     }
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <main className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden">
@@ -224,7 +233,7 @@ function InboxContent() {
             key={window.id}
             windowId={window.id}
             afterSend={() =>
-              api.get('/api/emails/inbox', { params: { limit: 20 } }).then(({ data }) => setThreads(data.threads))
+              api.get('/api/email/threads', { params: { limit: 20 } }).then(({ data }) => setThreads(data.threads))
             }
           />
         ))}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import {
@@ -13,6 +13,9 @@ import {
 import { formatRelativeTime, getFileIcon, formatEmailAddress, extractEmailAddress, formatFileSize } from '@/utils/format';
 import EmailHTMLContent from './EmailHTMLContent';
 import md5 from 'crypto-js/md5';
+import { useTags, Tag } from '@/hooks/useTags';
+import TagChip from './TagChip';
+import TagPicker from './TagPicker';
 
 interface Attachment {
   filename: string;
@@ -43,11 +46,24 @@ function getGravatarUrl(email: string): string {
   return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
 }
 
+interface TagPickerProps {
+  messageId: string;
+  existingTags: Tag[];
+  onAddTag: (messageId: string, label: string) => Promise<void>;
+  onRemoveTag: (messageId: string, tagId: string) => Promise<void>;
+  className?: string;
+}
+
 export default function EmailMessage({ message, onReply, onDownload, isLastInThread = false }: EmailMessageProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isReplying, setIsReplying] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const { tags, isLoading: tagsLoading, error: tagsError, getTags, addTag, removeTag } = useTags();
+
+  useEffect(() => {
+    getTags(message.messageId).catch(console.error);
+  }, [message.messageId, getTags]);
 
   const handleReply = async () => {
     if (!replyContent.trim()) return;
@@ -235,6 +251,36 @@ export default function EmailMessage({ message, onReply, onDownload, isLastInThr
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Tags Section */}
+      <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-wrap gap-1">
+          {tags.map((tag) => (
+            <TagChip
+              key={tag.id}
+              label={tag.label}
+              onRemove={() => removeTag(message.messageId, tag.id)}
+              isRemovable
+            />
+          ))}
+        </div>
+        <TagPicker
+          messageId={message.messageId}
+          existingTags={tags.map(t => t.label)}
+          onAddTag={(label) => addTag(message.messageId, label)}
+          onRemoveTag={(label) => {
+            const tag = tags.find(t => t.label === label);
+            if (tag) removeTag(message.messageId, tag.id);
+          }}
+        />
+      </div>
+
+      {/* Error Display */}
+      {tagsError && (
+        <div className="mt-4 rounded-md bg-red-500/10 p-3 text-sm text-red-400">
+          {tagsError}
+        </div>
+      )}
     </article>
   );
 } 

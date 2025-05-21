@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import { useState } from 'react';
 
 type LoginForm = { 
   email: string; 
@@ -18,18 +19,18 @@ export default function Login() {
       rememberMe: true
     }
   });
-  const auth = useAuth();
+  const { login } = useAuth();
   const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
   
-  
-  async function onSubmit(v: LoginForm) {
+  const onSubmit = async (v: LoginForm) => {
     try {
-      await auth.login(v.email, v.password, v.rememberMe);
+      await login(v.email, v.password);
       router.push('/inbox');
-    } catch {
-      alert('Login failed');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed');
     }
-  }
+  };
 
   return (
     <>

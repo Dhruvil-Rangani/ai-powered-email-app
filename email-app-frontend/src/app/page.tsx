@@ -12,18 +12,17 @@ import Footer from '../components/Footer';
 import AnimatedBackground from '../components/AnimatedBackground';
 
 export default function Landing() {
-  const { user, initialized } = useAuth();
   const router = useRouter();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    if (initialized && user) {
+    if (!loading && user) {
       router.push('/inbox');
     }
-  }, [initialized, user, router]);
+  }, [loading, user, router]);
 
-  // Don't render anything while checking auth status
-  if (!initialized) {
-    return null;
+  if (loading) {
+    return <div>Loading...</div>;
   }
 
   // Only render landing page if user is not authenticated

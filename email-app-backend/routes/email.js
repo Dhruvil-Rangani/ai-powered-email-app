@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const {
   sendEmail,
@@ -12,18 +12,15 @@ const {
   removeTag,
 } = require('../controllers/emailController');
 
-// Apply authentication middleware to all routes
-router.use(authenticateToken);
+// Email Routes with authentication
+router.post('/send', authenticate, upload.array('attachments'), sendEmail);
+router.get('/threads', authenticate, getInboxEmails);
+router.get('/:messageId/attachments/:filename', authenticate, downloadAttachment);
 
-// Email Routes
-router.post('/send', upload.array('attachments'), sendEmail);
-router.get('/threads', getInboxEmails); // Changed from /inbox to /threads to match frontend
-router.get('/:messageId/attachments/:filename', downloadAttachment);
-
-// Tag Routes
-router.post('/tags', tagEmail);
-router.get('/tags/:messageId', getEmailTags);
-router.get('/tags/by/:label', getEmailsByTag);
-router.delete('/tags/:messageId/:tagId', removeTag); // Added delete endpoint for tags
+// Tag Routes with authentication
+router.post('/tags', authenticate, tagEmail);
+router.get('/tags/:messageId', authenticate, getEmailTags);
+router.get('/tags/by/:label', authenticate, getEmailsByTag);
+router.delete('/tags/:messageId/:tagId', authenticate, removeTag);
 
 module.exports = router; 

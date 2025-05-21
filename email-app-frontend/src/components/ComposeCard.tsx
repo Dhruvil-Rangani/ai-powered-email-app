@@ -62,7 +62,7 @@ export default function ComposeCard({ windowId, afterSend }: Props) {
         removeWindow(windowId);
     };
 
-    async function onSubmit(data: ComposeForm) {
+    const onSubmit = async (data: ComposeForm) => {
         try {
             const formData = new FormData();
             formData.append('to', data.to);
@@ -71,9 +71,11 @@ export default function ComposeCard({ windowId, afterSend }: Props) {
             if (data.attachments) {
                 Array.from(data.attachments).forEach((file) => formData.append('attachments', file));
             }
-            await api.post('/api/emails/send', formData, {
+
+            await api.post('/api/email/send', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
+
             reset();
             afterSend?.();
             handleClose();
@@ -81,7 +83,7 @@ export default function ComposeCard({ windowId, afterSend }: Props) {
             const error = err as AxiosError<{ message: string }>;
             setError(error.response?.data?.message ?? 'Failed to send email');
         }
-    }
+    };
 
     return (
         <motion.div
