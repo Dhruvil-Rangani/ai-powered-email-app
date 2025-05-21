@@ -167,9 +167,9 @@ const removeTag = async (req, res) => {
 
     await prisma.tag.delete({
       where: {
-        id: tagIdInt,  // Use the parsed integer
+        id: tagIdInt,
         userId,
-        messageId,
+        emailId: messageId,
       },
     });
     res.sendStatus(204);
