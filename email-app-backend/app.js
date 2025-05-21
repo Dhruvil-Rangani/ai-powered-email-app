@@ -14,8 +14,14 @@ const prisma = new PrismaClient();
 
 dotenv.config();
 const app = express();
-app.use(cors());
+
+// Middleware
+app.use(cors({
+  origin: process.env.FRONTEND_ORIGIN || '*',
+  credentials: true
+}));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const server = http.createServer(app);
 const io = new Server(server, {
