@@ -46,14 +46,6 @@ function getGravatarUrl(email: string): string {
   return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
 }
 
-interface TagPickerProps {
-  messageId: string;
-  existingTags: Tag[];
-  onAddTag: (messageId: string, label: string) => Promise<void>;
-  onRemoveTag: (messageId: string, tagId: string) => Promise<void>;
-  className?: string;
-}
-
 export default function EmailMessage({ message, onReply, onDownload, isLastInThread = false }: EmailMessageProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isReplying, setIsReplying] = useState(false);
@@ -141,8 +133,7 @@ export default function EmailMessage({ message, onReply, onDownload, isLastInThr
           <TagPicker
             messageId={message.messageId}
             existingTags={tags.map(t => t.label)}
-            onAddTag={(label) => addTag(message.messageId, label)}
-            onRemoveTag={(label) => removeTag(message.messageId, label)}
+            onAddTag={(label: string) => addTag(message.messageId, label)}
             className="mr-2"
           />
           <button
@@ -155,22 +146,28 @@ export default function EmailMessage({ message, onReply, onDownload, isLastInThr
         </div>
       </div>
 
-      {/* Tags Section - Moved below header */}
+      {/* Tags Section */}
       <div className="flex items-center gap-2 border-b border-slate-700 bg-slate-800/50 px-4 py-2">
-        <div className="flex flex-wrap items-center gap-1">
-          {tags.map((tag) => (
-            <TagChip
-              key={tag.id}
-              label={tag.label}
-              onRemove={() => removeTag(message.messageId, tag.label)}
-              isRemovable
-            />
-          ))}
-        </div>
-        {tagsError && (
-          <div className="text-sm text-red-400">
-            {tagsError}
-          </div>
+        {tagsLoading ? (
+          <div className="text-sm text-slate-400">Loading tags...</div>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center gap-1">
+              {tags.map((tag) => (
+                <TagChip
+                  key={tag.id}
+                  label={tag.label}
+                  onRemove={() => removeTag(message.messageId, tag.label)}
+                  isRemovable
+                />
+              ))}
+            </div>
+            {tagsError && (
+              <div className="text-sm text-red-400">
+                {tagsError}
+              </div>
+            )}
+          </>
         )}
       </div>
 

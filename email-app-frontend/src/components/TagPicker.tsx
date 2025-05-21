@@ -8,7 +8,6 @@ interface TagPickerProps {
     messageId: string;
     existingTags: string[];
     onAddTag: (label: string) => void;
-    onRemoveTag: (label: string) => void;
     className?: string;
 }
 
@@ -16,7 +15,6 @@ export default function TagPicker({
     messageId,
     existingTags,
     onAddTag,
-    onRemoveTag,
     className = '',
 }: TagPickerProps) {
     const [isOpen, setIsOpen] = useState(false);
@@ -24,6 +22,21 @@ export default function TagPicker({
     const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+
+    // Update suggested tags when input changes
+    useEffect(() => {
+        if (newTag.trim()) {
+            // Filter out existing tags and find matches
+            const suggestions = ['Important', 'Work', 'Personal', 'Follow-up', 'Urgent']
+                .filter(tag => 
+                    tag.toLowerCase().includes(newTag.toLowerCase()) && 
+                    !existingTags.includes(tag)
+                );
+            setSuggestedTags(suggestions);
+        } else {
+            setSuggestedTags([]);
+        }
+    }, [newTag, existingTags]);
 
     // Close picker when clicking outside
     useEffect(() => {

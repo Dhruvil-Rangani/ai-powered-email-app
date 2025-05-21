@@ -2,10 +2,15 @@ import { useState, useCallback } from 'react';
 import api from '@/lib/api';
 
 export interface Tag {
-  id: number;
+  id: string;
   label: string;
   messageId: string;
   createdAt: string;
+}
+
+interface ApiError {
+  message: string;
+  details?: string;
 }
 
 interface UseTagsReturn {
@@ -83,14 +88,15 @@ export function useTags(): UseTagsReturn {
     setIsLoading(true);
     setError(null);
     try {
-      const { data } = await api.get(`/api/email/tags/${messageId}`);
-      setTags(data);
-      return data;
-    } catch (err: any) {
-      console.error('Get tags error:', err.response?.data || err);
-      const errorMessage = err.response?.data?.error || err.message || 'Failed to fetch tags';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      const response = await api.get(`/api/email/${messageId}/tags`);
+      const data = response.data as { tags: Tag[] };
+      setTags(data.tags);
+      return data.tags;
+    } catch (err) {
+      const error = err as { response?: { data?: ApiError } };
+      setError(error.response?.data?.message ?? 'Failed to fetch tags');
+      console.error('Failed to fetch tags:', error);
+      throw new Error(error.response?.data?.message ?? 'Failed to fetch tags');
     } finally {
       setIsLoading(false);
     }

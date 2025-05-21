@@ -10,7 +10,7 @@ import {
   ArrowRightOnRectangleIcon,
   PencilSquareIcon,
 } from '@heroicons/react/24/outline';
-import io, { Socket } from 'socket.io-client';
+import io from 'socket.io-client';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import EmailMessage from '@/components/EmailMessage';
