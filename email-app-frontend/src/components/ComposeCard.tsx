@@ -26,7 +26,6 @@ const ComposeCard = memo(function ComposeCard({ windowId, afterSend }: Props) {
     const dragControls = useDragControls();
     const [mounted, setMounted] = useState(false);
     const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
-    const [isDragging, setIsDragging] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
     // Find window data early to avoid reference issues
@@ -64,14 +63,12 @@ const ComposeCard = memo(function ComposeCard({ windowId, afterSend }: Props) {
             if (event instanceof PointerEvent && !event.target.closest('button')) {
                 // Start drag with the current event
                 dragControls.start(event);
-                setIsDragging(true);
             }
             compose.bringToFront(windowId);
         }
     }, [dragControls, compose, windowId, composeWindow?.isMaximized, isMobile]);
 
     const handleDragEnd = useCallback(() => {
-        setIsDragging(false);
         // Update position after drag ends (only on desktop)
         if (!isMobile && windowRef.current) {
             const rect = windowRef.current.getBoundingClientRect();
@@ -89,8 +86,6 @@ const ComposeCard = memo(function ComposeCard({ windowId, afterSend }: Props) {
 
     const handleMaximize = useCallback(() => {
         if (composeWindow && !isMobile) {
-            // Cancel any ongoing drag before maximizing
-            setIsDragging(false);
             compose.updateWindow(windowId, { isMaximized: !composeWindow.isMaximized });
             // Reset position when maximizing
             if (!composeWindow.isMaximized) {
@@ -102,8 +97,6 @@ const ComposeCard = memo(function ComposeCard({ windowId, afterSend }: Props) {
     }, [compose, windowId, composeWindow, isMobile]);
 
     const handleClose = useCallback(() => {
-        // Cancel any ongoing drag before closing
-        setIsDragging(false);
         compose.removeWindow(windowId);
     }, [compose, windowId]);
 
@@ -126,8 +119,6 @@ const ComposeCard = memo(function ComposeCard({ windowId, afterSend }: Props) {
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
             }
-            // Cancel any ongoing drag on unmount
-            setIsDragging(false);
         };
     }, []);
 
@@ -177,7 +168,6 @@ const ComposeCard = memo(function ComposeCard({ windowId, afterSend }: Props) {
                     if (!composeWindow.isMaximized && !isMobile && e.target instanceof HTMLElement && !e.target.closest('button')) {
                         // Start drag with the current event
                         dragControls.start(e);
-                        setIsDragging(true);
                     }
                 }}
             >
