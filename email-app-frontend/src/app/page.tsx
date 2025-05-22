@@ -28,21 +28,23 @@ export default function Landing() {
   // Only render landing page if user is not authenticated
   if (!user) {
     return (
-      <div className="relative min-h-screen bg-slate-950 text-white">
-        <AnimatedBackground />
-        <div className="relative">
-          <Navbar />
-          <main className="relative">
-            <Hero />
-            <div className="relative z-10">
-              <FeatureGrid />
-              <BuiltFor />
-              <Stepper />
-            </div>
-          </main>
-          <Footer />
+      <>
+        <Navbar />
+        <div className="relative min-h-screen bg-slate-950 text-white">
+          <AnimatedBackground />
+          <div className="relative">
+            <main className="relative">
+              <Hero />
+              <div className="relative z-10">
+                <FeatureGrid />
+                <BuiltFor />
+                <Stepper />
+              </div>
+            </main>
+            <Footer />
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 

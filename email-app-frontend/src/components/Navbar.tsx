@@ -5,6 +5,19 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import Logo from './Logo';
 
+/* ───────── tiny helper ───────── */
+function useMediaQuery(q: string) {
+  const [matches, set] = useState(false);
+  useEffect(() => {
+    const m = window.matchMedia(q);
+    const onChange = () => set(m.matches);
+    onChange();                     // init
+    m.addEventListener('change', onChange);
+    return () => m.removeEventListener('change', onChange);
+  }, [q]);
+  return matches;
+}
+
 export default function Navbar() {
   /* ───────── routing helpers ───────── */
   const pathname       = usePathname();
@@ -21,23 +34,38 @@ export default function Navbar() {
   /* ───────── run-once animation flag ───────── */
   const didIntroAnim = useRef(false);
 
-  /* collapse on scroll (unless hovering) */
+  /* desktop / mobile breakpoint */
+  const isDesktop = useMediaQuery('(min-width: 768px)');
+
+  /* collapse on scroll (desktop only, unless hovering) */
   useMotionValueEvent(scrollY, 'change', (y) => {
-    if (!isHovered) setIsExpanded(y < 50);
+    if (isDesktop && !isHovered) setIsExpanded(y < 50);
   });
 
-  /* expand while hovering */
+  /* expand while hovering (desktop only) */
   useEffect(() => {
-    if (isHovered) setIsExpanded(true);
-  }, [isHovered]);
+    if (isDesktop && isHovered) setIsExpanded(true);
+  }, [isHovered, isDesktop]);
 
-  // (Early return is now after all hooks.)
+  /* hide on Inbox */
   if (isInboxPage) return null;
+
+  /* desktop width animation, mobile fixed */
+  const width = isDesktop
+    ? isExpanded ? '90vw' : '300px'
+    : '100%';                      // always full width on mobile
+
+  const maxW  = isDesktop
+    ? isExpanded ? '1200px' : '300px'
+    : '100%';
 
   return (
     <motion.nav
-      className="fixed left-1/2 top-4 z-30 -translate-x-1/2"
-      /* slide-in only the very first time this file is mounted */
+      /* mobile: full-width bar; desktop: centred */
+      className="
+        fixed top-4 z-30 w-full px-4
+        md:left-1/2 md:-translate-x-1/2 md:w-auto md:px-0
+      "
       initial={didIntroAnim.current ? false : { y: -50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6 }}
@@ -46,28 +74,31 @@ export default function Navbar() {
       onMouseLeave={() => setIsHovered(false)}
     >
       <motion.div
-        className="relative flex items-center justify-between rounded-full bg-slate-900/80 backdrop-blur-sm shadow-lg ring-1 ring-slate-800/50"
-        /* explicit start width kills the flash */
-        initial={{ width: '90vw', maxWidth: '1200px' }}
-        animate={{
-          width:    isExpanded ? '90vw'  : '300px',
-          maxWidth: isExpanded ? '1200px': '300px',
-        }}
+        className="
+          relative mx-auto flex items-center justify-between
+          rounded-full bg-slate-900/80 backdrop-blur-sm
+          shadow-lg ring-1 ring-slate-800/50
+        "
+        initial={{ width: '100%', maxWidth: '100%' }}
+        animate={{ width, maxWidth: maxW }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       >
         {/* logo + title */}
-        <div className="flex items-center px-6 py-3">
-          <Link href="/" className="flex items-center space-x-2 text-xl font-bold tracking-tight">
+        <div className="flex items-center px-4 sm:px-6 py-2 sm:py-3">
+          <Link
+            href="/"
+            className="flex items-center space-x-2 text-lg sm:text-xl font-bold tracking-tight"
+          >
             <Logo />
             <motion.span
-              animate={{ opacity: isExpanded ? 1 : 0 }}
+              animate={{ opacity: isDesktop && isExpanded ? 1 : 0 }}
               transition={{ duration: 0.2 }}
               className="text-indigo-400"
             >
               Dice
             </motion.span>
             <motion.span
-              animate={{ opacity: isExpanded ? 1 : 0 }}
+              animate={{ opacity: isDesktop && isExpanded ? 1 : 0 }}
               transition={{ duration: 0.2 }}
             >
               Mail
@@ -75,7 +106,7 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* center links (hide when collapsed) */}
+        {/* centre links – desktop only */}
         <motion.div
           className="hidden md:flex items-center gap-6 px-6"
           animate={{
@@ -96,18 +127,18 @@ export default function Navbar() {
         </motion.div>
 
         {/* right-side CTA */}
-        <div className="px-6 py-3">
+        <div className="px-4 sm:px-6 py-2 sm:py-3">
           {isLoginPage ? (
             <Link
               href="/register"
-              className="rounded-full bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-400 transition-colors"
+              className="rounded-full bg-indigo-500 px-3 sm:px-4 py-1.5 sm:py-2 text-sm font-medium text-white hover:bg-indigo-400 transition-colors"
             >
               Register
             </Link>
           ) : (isRegisterPage || isLandingPage) && (
             <Link
               href="/login"
-              className="rounded-full bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-400 transition-colors"
+              className="rounded-full bg-indigo-500 px-3 sm:px-4 py-1.5 sm:py-2 text-sm font-medium text-white hover:bg-indigo-400 transition-colors"
             >
               Login
             </Link>
@@ -117,4 +148,3 @@ export default function Navbar() {
     </motion.nav>
   );
 }
-
