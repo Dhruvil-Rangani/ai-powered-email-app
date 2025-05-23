@@ -55,13 +55,15 @@ export function formatFileSize(bytes?: number): string {
   return `${size.toFixed(1)} ${units[unitIndex]}`;
 }
 
-export function extractEmailAddress(fullAddress: string): string {
+export function extractEmailAddress(fullAddress?: string): string {
+  if (!fullAddress) return 'unknown@example.com';
   const match = fullAddress.match(/<(.+?)>/) || fullAddress.match(/([^<]+)/);
   return match ? match[1].trim() : fullAddress.trim();
 }
 
-export function formatEmailAddress(fullAddress: string): string {
+export function formatEmailAddress(fullAddress?: string): string {
+  if (!fullAddress) return 'Unknown Sender';
   const name = fullAddress.split('<')[0].trim();
   const email = extractEmailAddress(fullAddress);
   return name ? `${name} <${email}>` : email;
-} 
+}
