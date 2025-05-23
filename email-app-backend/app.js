@@ -11,6 +11,7 @@ const { attachRealtime } = require('./controllers/emailRealtimeController');
 const { verifyAccess } = require('./utility/jwt'); // <-- added import
 const { PrismaClient } = require('@prisma/client'); // for DB lookup
 const prisma = new PrismaClient();
+const { getImapPassword } = require('./services/userService');
 
 dotenv.config();
 const app = express();
@@ -32,15 +33,17 @@ io.on('connection', async (socket) => {
   try {
     const token = socket.handshake.auth.token;
     const payload = verifyAccess(token);
-    // fetch IMAP password from DB
+    
+    // fetch user from DB
     const userRec = await prisma.user.findUnique({ where: { id: payload.id } });
     if (!userRec) throw new Error('User not found');
+    
     socket.join(payload.id);
     socket.handshake.auth.user = {
       id: payload.id,
-      email: payload.email,
-      imapPassword: userRec.imapPassword // loaded from DB
+      email: payload.email
     };
+    
     attachRealtime(socket);
   } catch (err) {
     console.error('Socket auth failed', err);

@@ -1,8 +1,11 @@
 // services/imapService.js
 const getImapConnection = require('../config/imap');
 const { simpleParser } = require('mailparser');
+const { getImapPassword } = require('./userService');
 
-async function watchInboxForUser({ user, password, host, port, tls }, emitNew) {
+async function watchInboxForUser({ user, userId, host, port, tls }, emitNew) {
+  // Get decrypted IMAP password
+  const password = await getImapPassword(userId);
   const imap = getImapConnection({ user, password, host, port, tls });
 
   imap.once('ready', () => {
@@ -50,11 +53,14 @@ async function watchInboxForUser({ user, password, host, port, tls }, emitNew) {
   imap.connect();
 }
 
-const fetchInboxEmails = ({
-  user, password, host, port, tls,
+const fetchInboxEmails = async ({
+  user, userId, host, port, tls,
   from, subject, body, after, before, folder, limit = 50
-}) =>
-  new Promise((resolve, reject) => {
+}) => {
+  // Get decrypted IMAP password
+  const password = await getImapPassword(userId);
+  
+  return new Promise((resolve, reject) => {
     const imap = getImapConnection({ user, password, host, port, tls });
     const emails = [];
     const mailFolder = folder || 'INBOX';
@@ -148,6 +154,7 @@ const fetchInboxEmails = ({
 
     imap.connect();
   });
+};
 
 module.exports = {
   fetchInboxEmails,

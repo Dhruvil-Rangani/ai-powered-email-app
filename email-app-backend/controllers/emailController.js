@@ -6,6 +6,7 @@ const getImapConnection = require('../config/imap');
 const { simpleParser } = require('mailparser');
 const { addTag, getTags, filterEmailsByTag } = require('../services/tagService');
 const { PrismaClient } = require('@prisma/client');
+const { getImapPassword } = require('../services/userService');
 const prisma = new PrismaClient();
 
 // Send Email Controller
@@ -47,7 +48,7 @@ const getInboxEmails = async (req, res) => {
   try {
     const emails = await fetchInboxEmails({
       user: user.email,
-      password: user.imapPassword,
+      userId: user.id,
       host: process.env.IMAP_HOST,
       port: Number(process.env.IMAP_PORT),
       tls: true,
@@ -58,7 +59,7 @@ const getInboxEmails = async (req, res) => {
     res.status(200).json({ threads });
   } catch (error) {
     console.error('📥 Fetch inbox failed:', error);
-    res.status(500).json({ error: 'Failed to fetch emails' });
+    res.status(500).json({ error: 'Failed to fetch emails', details: error.message });
   }
 };
 
@@ -66,53 +67,62 @@ const getInboxEmails = async (req, res) => {
 const downloadAttachment = async (req, res) => {
   const { messageId, filename } = req.params;
   const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user) return res.sendStatus(404);
 
-  const imap = getImapConnection({
-    user: user.email,
-    password: user.imapPassword,
-    host: process.env.IMAP_HOST,
-    port: Number(process.env.IMAP_PORT),
-    tls: true,
-  });
+  try {
+    // Get decrypted IMAP password
+    const password = await getImapPassword(user.id);
+    
+    const imap = getImapConnection({
+      user: user.email,
+      password,
+      host: process.env.IMAP_HOST,
+      port: Number(process.env.IMAP_PORT),
+      tls: true,
+    });
 
-  imap.once('ready', () => {
-    imap.openBox('INBOX', true, () => {
-      imap.search([['HEADER', 'Message-ID', messageId]], (err, results) => {
-        if (err || !results.length) {
-          imap.end();
-          return res.status(404).json({ error: 'Email not found' });
-        }
+    imap.once('ready', () => {
+      imap.openBox('INBOX', true, () => {
+        imap.search([['HEADER', 'Message-ID', messageId]], (err, results) => {
+          if (err || !results.length) {
+            imap.end();
+            return res.status(404).json({ error: 'Email not found' });
+          }
 
-        const fetch = imap.fetch(results, { bodies: '', struct: true });
-        fetch.on('message', (msg) => {
-          msg.on('body', (stream) => {
-            simpleParser(stream, (err, parsed) => {
-              const attachment = parsed.attachments?.find(att => att.filename === filename);
-              if (!attachment) {
+          const fetch = imap.fetch(results, { bodies: '', struct: true });
+          fetch.on('message', (msg) => {
+            msg.on('body', (stream) => {
+              simpleParser(stream, (err, parsed) => {
+                const attachment = parsed.attachments?.find(att => att.filename === filename);
+                if (!attachment) {
+                  imap.end();
+                  return res.status(404).json({ error: 'Attachment not found' });
+                }
+
+                res.set({
+                  'Content-Type': attachment.contentType,
+                  'Content-Disposition': `attachment; filename="${attachment.filename}"`,
+                });
+
+                res.send(attachment.content);
                 imap.end();
-                return res.status(404).json({ error: 'Attachment not found' });
-              }
-
-              res.set({
-                'Content-Type': attachment.contentType,
-                'Content-Disposition': `attachment; filename="${attachment.filename}"`,
               });
-
-              res.send(attachment.content);
-              imap.end();
             });
           });
         });
       });
     });
-  });
 
-  imap.once('error', (err) => {
-    console.error('Attachment download error:', err);
-    res.status(500).json({ error: 'Failed to download attachment' });
-  });
+    imap.once('error', (err) => {
+      console.error('Attachment download error:', err);
+      res.status(500).json({ error: 'Failed to download attachment', details: err.message });
+    });
 
-  imap.connect();
+    imap.connect();
+  } catch (error) {
+    console.error('Failed to get IMAP password:', error);
+    res.status(500).json({ error: 'Failed to download attachment', details: error.message });
+  }
 };
 
 // Add Tag to Email
