@@ -1,3 +1,4 @@
+// services/imapService.js
 const getImapConnection = require('../config/imap');
 const { simpleParser } = require('mailparser');
 
@@ -9,6 +10,7 @@ async function watchInboxForUser({ user, password, host, port, tls }, emitNew) {
       if (err) throw err;
 
       imap.on('mail', () => {
+        if (!box.messages.total) return; // 🛑 Skip fetch if inbox is empty
         const seq = `${box.messages.total}:*`;
         const f = imap.seq.fetch(seq, { bodies: '', struct: true });
 
@@ -18,15 +20,15 @@ async function watchInboxForUser({ user, password, host, port, tls }, emitNew) {
               if (err) return;
 
               const emailObj = {
-                subject: parsed.subject,
-                from: parsed.from?.text,
-                to: parsed.to?.text,
-                cc: parsed.cc?.text,
-                date: parsed.date,
-                text: parsed.text,
-                html: parsed.html,
-                messageId: parsed.messageId,
-                inReplyTo: parsed.inReplyTo,
+                subject: parsed.subject || '',
+                from: parsed.from?.text || '',
+                to: parsed.to?.text || '',
+                cc: parsed.cc?.text || '',
+                date: parsed.date || null,
+                text: parsed.text || '',
+                html: parsed.html || '',
+                messageId: parsed.messageId || '',
+                inReplyTo: parsed.inReplyTo || '',
                 references: parsed.references || [],
                 attachments: (parsed.attachments || []).map(a => ({
                   filename: a.filename,
@@ -70,6 +72,11 @@ const fetchInboxEmails = ({
       imap.openBox(mailFolder, true, (err, box) => {
         if (err) return reject(err);
 
+        if (!box.messages.total) {
+          imap.end();
+          return resolve([]);
+        }
+
         const start = Math.max(1, box.messages.total - limit + 1);
         const seqRange = `${start}:*`;
         const f = imap.seq.fetch(seqRange, { bodies: '', struct: true });
@@ -81,25 +88,29 @@ const fetchInboxEmails = ({
               simpleParser(stream, (err, parsed) => {
                 if (err) return rej(err);
 
-                const d = parsed.date && new Date(parsed.date);
+                const fromText    = parsed.from?.text || '';
+                const subjectText = parsed.subject || '';
+                const bodyText    = parsed.text || '';
+                const dateObj     = parsed.date ? new Date(parsed.date) : null;
+
                 const ok =
-                  (!fromFilter || parsed.from.text.toLowerCase().includes(fromFilter.toLowerCase())) &&
-                  (!subjectFilter || (parsed.subject || '').toLowerCase().includes(subjectFilter.toLowerCase())) &&
-                  (!bodyFilter || (parsed.text || '').toLowerCase().includes(bodyFilter.toLowerCase())) &&
-                  (!afterDate || (d && d >= afterDate)) &&
-                  (!beforeDate || (d && d <= beforeDate));
+                  (!fromFilter || fromText.toLowerCase().includes(fromFilter.toLowerCase())) &&
+                  (!subjectFilter || subjectText.toLowerCase().includes(subjectFilter.toLowerCase())) &&
+                  (!bodyFilter || bodyText.toLowerCase().includes(bodyFilter.toLowerCase())) &&
+                  (!afterDate || (dateObj && dateObj >= afterDate)) &&
+                  (!beforeDate || (dateObj && dateObj <= beforeDate));
 
                 if (ok) {
                   emails.push({
-                    subject: parsed.subject,
-                    from: parsed.from?.text,
-                    to: parsed.to?.text,
-                    cc: parsed.cc?.text,
-                    date: parsed.date,
-                    text: parsed.text,
-                    html: parsed.html,
-                    messageId: parsed.messageId,
-                    inReplyTo: parsed.inReplyTo,
+                    subject: subjectText,
+                    from: fromText,
+                    to: parsed.to?.text || '',
+                    cc: parsed.cc?.text || '',
+                    date: parsed.date || null,
+                    text: bodyText,
+                    html: parsed.html || '',
+                    messageId: parsed.messageId || '',
+                    inReplyTo: parsed.inReplyTo || '',
                     references: parsed.references || [],
                     attachments: (parsed.attachments || []).map(a => ({
                       filename: a.filename,
@@ -123,12 +134,18 @@ const fetchInboxEmails = ({
               imap.end();
               resolve(emails.sort((a, b) => new Date(b.date) - new Date(a.date)));
             })
-            .catch(reject);
+            .catch(err => {
+              imap.end();
+              reject(err);
+            });
         });
       });
     });
 
-    imap.once('error', reject);
+    imap.once('error', err => {
+      reject(err);
+    });
+
     imap.connect();
   });
 
