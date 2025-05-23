@@ -18,7 +18,23 @@ exports.register = async (req, res) => {
 
   try {
     const user = await createUser(email, password);
-    return res.status(201).json({ id: user.id, email: user.email });
+    
+    // Generate tokens after successful registration
+    const accessToken = signAccess({ id: user.id, email: user.email });
+    const refreshToken = randomUUID();
+    
+    // Store refresh token in database
+    await prisma.refreshToken.create({
+      data: { token: refreshToken, userId: user.id, expires: expiresAt() }
+    });
+
+    // Return user data with tokens
+    return res.status(201).json({ 
+      id: user.id, 
+      email: user.email,
+      accessToken,
+      refreshToken
+    });
   } catch (err) {
     if (err.code === 'P2002') {
       return res.status(409).json({ error: 'Email already in use' });
