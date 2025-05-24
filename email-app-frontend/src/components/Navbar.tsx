@@ -5,13 +5,12 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import Logo from './Logo';
 
-/* ───────── tiny helper ───────── */
 function useMediaQuery(q: string) {
   const [matches, set] = useState(false);
   useEffect(() => {
     const m = window.matchMedia(q);
     const onChange = () => set(m.matches);
-    onChange();                     // init
+    onChange();
     m.addEventListener('change', onChange);
     return () => m.removeEventListener('change', onChange);
   }, [q]);
@@ -19,53 +18,40 @@ function useMediaQuery(q: string) {
 }
 
 export default function Navbar() {
-  /* ───────── routing helpers ───────── */
-  const pathname       = usePathname();
-  const isLoginPage    = pathname === '/login';
+  const pathname = usePathname();
+  const isLoginPage = pathname === '/login';
   const isRegisterPage = pathname === '/register';
-  const isLandingPage  = pathname === '/';
-  const isInboxPage    = pathname === '/inbox';
+  const isLandingPage = pathname === '/';
+  const isInboxPage = pathname === '/inbox';
 
-  /* ───────── scroll / hover state ───────── */
   const { scrollY } = useScroll();
   const [isExpanded, setIsExpanded] = useState(true);
-  const [isHovered,  setIsHovered]  = useState(false);
-
-  /* ───────── run-once animation flag ───────── */
+  const [isHovered, setIsHovered] = useState(false);
   const didIntroAnim = useRef(false);
 
-  /* desktop / mobile breakpoint */
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
-  /* collapse on scroll (desktop only, unless hovering) */
   useMotionValueEvent(scrollY, 'change', (y) => {
     if (isDesktop && !isHovered) setIsExpanded(y < 50);
   });
 
-  /* expand while hovering (desktop only) */
   useEffect(() => {
     if (isDesktop && isHovered) setIsExpanded(true);
   }, [isHovered, isDesktop]);
 
-  /* hide on Inbox */
   if (isInboxPage) return null;
 
-  /* desktop width animation, mobile fixed */
   const width = isDesktop
     ? isExpanded ? '90vw' : '300px'
-    : '100%';                      // always full width on mobile
+    : '100%';
 
-  const maxW  = isDesktop
+  const maxW = isDesktop
     ? isExpanded ? '1200px' : '300px'
     : '100%';
 
   return (
     <motion.nav
-      /* mobile: full-width bar; desktop: centred */
-      className="
-        fixed top-4 z-30 w-full px-4
-        md:left-1/2 md:-translate-x-1/2 md:w-auto md:px-0
-      "
+      className="fixed top-0 left-0 z-30 w-full px-4 py-3 md:top-4 md:left-1/2 md:-translate-x-1/2 md:w-auto md:px-0 md:py-0"
       initial={didIntroAnim.current ? false : { y: -50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6 }}
@@ -74,11 +60,11 @@ export default function Navbar() {
       onMouseLeave={() => setIsHovered(false)}
     >
       <motion.div
-        className="
-          relative mx-auto flex items-center justify-between
-          rounded-full bg-slate-900/80 backdrop-blur-sm
-          shadow-lg ring-1 ring-slate-800/50
-        "
+        className={`
+          relative flex items-center justify-between
+          bg-slate-900/80 backdrop-blur-sm shadow-lg ring-1 ring-slate-800/50
+          ${isDesktop ? 'mx-auto rounded-full' : 'rounded-full w-full'}
+        `}
         initial={{ width: '100%', maxWidth: '100%' }}
         animate={{ width, maxWidth: maxW }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
@@ -91,40 +77,36 @@ export default function Navbar() {
           >
             <Logo />
             <motion.span
-              animate={{ opacity: isDesktop && isExpanded ? 1 : 0 }}
+              animate={{ opacity: isExpanded ? 1 : 0 }}
               transition={{ duration: 0.2 }}
               className="text-indigo-400"
             >
-              Dice
-            </motion.span>
-            <motion.span
-              animate={{ opacity: isDesktop && isExpanded ? 1 : 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              Mail
+              Dice<span className="text-white">Mail</span>
             </motion.span>
           </Link>
         </div>
 
         {/* centre links – desktop only */}
-        <motion.div
-          className="hidden md:flex items-center gap-6 px-6"
-          animate={{
-            opacity: isExpanded ? 1 : 0,
-            display: isExpanded ? 'flex' : 'none',
-          }}
-          transition={{ duration: 0.2 }}
-        >
-          <Link href="/#features" className="text-slate-300 hover:text-indigo-300 transition-colors">
-            Features
-          </Link>
-          <Link href="/#how" className="text-slate-300 hover:text-indigo-300 transition-colors">
-            How It Works
-          </Link>
-          <Link href="/#pricing" className="text-slate-300 hover:text-indigo-300 transition-colors">
-            Pricing
-          </Link>
-        </motion.div>
+        {isDesktop && (
+          <motion.div
+            className="hidden md:flex items-center gap-6 px-6"
+            animate={{
+              opacity: isExpanded ? 1 : 0,
+              display: isExpanded ? 'flex' : 'none',
+            }}
+            transition={{ duration: 0.2 }}
+          >
+            <Link href="/#features" className="text-slate-300 hover:text-indigo-300 transition-colors">
+              Features
+            </Link>
+            <Link href="/#how" className="text-slate-300 hover:text-indigo-300 transition-colors">
+              How It Works
+            </Link>
+            <Link href="/#pricing" className="text-slate-300 hover:text-indigo-300 transition-colors">
+              Pricing
+            </Link>
+          </motion.div>
+        )}
 
         {/* right-side CTA */}
         <div className="px-4 sm:px-6 py-2 sm:py-3">
