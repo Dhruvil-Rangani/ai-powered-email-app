@@ -23,9 +23,8 @@ export default function Landing() {
 
   if (loading) {
     return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white space-y-4">
+    <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white">
       <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-indigo-400 border-opacity-70" />
-      <p className="text-sm text-indigo-300">Loading your inbox...</p>
     </div>
   );
   }
