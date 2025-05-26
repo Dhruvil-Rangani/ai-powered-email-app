@@ -16,6 +16,7 @@ import Image from 'next/image';
 import EmailMessage from '@/components/EmailMessage';
 import { ComposeProvider } from '@/contexts/ComposeContext';
 import { ThreadMsg, ThreadsResponse } from '@/types/email';
+import TopLoadingBar from '@/components/TopLoadingBar';
 
 const ComposeCard = dynamic(() => import('@/components/ComposeCard'), { ssr: false });
 
@@ -131,7 +132,15 @@ function InboxContent() {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+    <>
+      <TopLoadingBar />
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white space-y-4">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-indigo-400 border-opacity-60" />
+        <p className="text-sm text-slate-400">Loading your inbox...</p>
+      </div>
+    </>
+  );
   }
 
   return (
