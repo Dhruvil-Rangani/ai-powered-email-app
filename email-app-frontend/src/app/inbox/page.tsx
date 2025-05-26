@@ -16,7 +16,7 @@ import Image from 'next/image';
 import EmailMessage from '@/components/EmailMessage';
 import { ComposeProvider } from '@/contexts/ComposeContext';
 import { ThreadMsg, ThreadsResponse } from '@/types/email';
-import TopLoadingBar from '@/components/TopLoadingBar';
+import { RingLoader } from 'react-spinners';
 
 const ComposeCard = dynamic(() => import('@/components/ComposeCard'), { ssr: false });
 
@@ -133,14 +133,18 @@ function InboxContent() {
 
   if (loading) {
     return (
-    <>
-      <TopLoadingBar />
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white space-y-4">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-indigo-400 border-opacity-60" />
-        <p className="text-sm text-slate-400">Loading your inbox...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white space-y-4 animate-fadeIn">
+        <Image
+          src="/logo.png"
+          alt="Logo"
+          width={40}
+          height={40}
+          className="opacity-70 animate-pulse drop-shadow-[0_0_8px_#6366f1]"
+        />
+        <RingLoader color="#6366f1" size={60} />
+        <p className="text-sm text-slate-400">Fetching your inbox...</p>
       </div>
-    </>
-  );
+    );
   }
 
   return (
@@ -184,11 +188,10 @@ function InboxContent() {
                   key={first.messageId}
                   onClick={() => setActive(idx)}
                   whileHover={{ scale: 1.02 }}
-                  className={`cursor-pointer rounded-md p-3 transition-all ${
-                    isActive
+                  className={`cursor-pointer rounded-md p-3 transition-all ${isActive
                       ? 'bg-indigo-500/20 ring-1 ring-indigo-400'
                       : 'hover:bg-slate-800/60'
-                  } ${isNew ? 'ring-2 ring-green-400/70' : ''}`}
+                    } ${isNew ? 'ring-2 ring-green-400/70' : ''}`}
                 >
                   <p className="truncate font-medium">{first.subject || '(no subject)'}</p>
                   <p className="truncate text-xs text-slate-400">{first.from}</p>
