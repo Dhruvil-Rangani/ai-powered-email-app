@@ -175,13 +175,18 @@ const removeTag = async (req, res) => {
       });
     }
 
-    await prisma.tag.delete({
+    const result = await prisma.tag.deleteMany({
       where: {
         id: tagIdInt,
         userId,
         emailId: messageId,
       },
     });
+
+    if (result.count === 0) {
+      return res.status(404).json({ error: 'Tag not found' });
+    }
+
     res.sendStatus(204);
   } catch (err) {
     console.error('Failed to remove tag:', err);
